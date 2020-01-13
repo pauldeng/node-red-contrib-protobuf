@@ -49,7 +49,8 @@ ${msg.protobufType}
                     node.send(msg);
                 }
                 else {
-                    return node.error('Wire format is invalid.');
+                    //node.log(msg.payload.toString("hex"));
+                    return node.error('Wire format is invalid: ' + JSON.stringify(msg));
                 }
             }
             let decodeoptions = {
