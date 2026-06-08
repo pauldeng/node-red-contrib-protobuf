@@ -1,4 +1,4 @@
-var should = require('should');
+const assert = require('node:assert');
 var helper = require('node-red-node-test-helper');
 var encode = require('../src/nodes/encode');
 var protofile = require('../src/nodes/protofile');
@@ -41,7 +41,6 @@ describe('protobuf encode node', function () {
 
   afterEach(function () {
     helper.unload();
-    should();
   });
 
   it('should be loaded', function (done) {
@@ -53,8 +52,8 @@ describe('protobuf encode node', function () {
     }];
     helper.load(encode, flow, function () {
       var n1 = helper.getNode('n1');
-      n1.should.have.property('name', 'test name');
-      n1.should.have.property('protoType', 'TestType');
+      assert.strictEqual(n1.name, 'test name');
+      assert.strictEqual(n1.protoType, 'TestType');
       done();
     });
   });
@@ -70,7 +69,7 @@ describe('protobuf encode node', function () {
       var encodeNode = helper.getNode('encode-node');
       var helperNode = helper.getNode('helper-node');
       helperNode.on('input', function (msg) {
-        should(msg.payload instanceof Buffer).equal(true);
+        assert.ok(msg.payload instanceof Buffer);
         done();
       });
       encodeNode.receive({
@@ -90,7 +89,7 @@ describe('protobuf encode node', function () {
       var encodeNode = helper.getNode('encode-node');
       var helperNode = helper.getNode('helper-node');
       helperNode.on('input', function (msg) {
-        should(msg.payload instanceof Buffer).equal(true);
+        assert.ok(msg.payload instanceof Buffer);
         done();
       });
       encodeNode.receive({

@@ -1,9 +1,7 @@
-var should = require('should');
+const assert = require('node:assert');
 var helper = require('node-red-node-test-helper');
 var protofile = require('../src/nodes/protofile');
 var fs = require('fs');
-const { SSL_OP_EPHEMERAL_RSA } = require('constants');
-const { time } = require('console');
 
 helper.init(require.resolve('node-red'));
 
@@ -11,7 +9,6 @@ describe('protobuf protofile node', function () {
 
   afterEach(function () {
     helper.unload();
-    should();
   });
 
   it('test.proto should be loadable', function (done) {
@@ -24,9 +21,9 @@ describe('protobuf protofile node', function () {
     var flow = [{ id: 'n1', type: 'protobuf-file', name: 'test name', protopath: 'test/assets/test.proto' }];
     helper.load(protofile, flow, function () {
       var n1 = helper.getNode('n1');
-      n1.should.have.property('name', 'test name');
-      n1.should.have.property('protopath', 'test/assets/test.proto');
-      n1.should.have.property('protoTypes').which.is.a.Object();
+      assert.strictEqual(n1.name, 'test name');
+      assert.strictEqual(n1.protopath, 'test/assets/test.proto');
+      assert.strictEqual(typeof n1.protoTypes, 'object');
       done();
     });
   });
@@ -38,7 +35,7 @@ describe('protobuf protofile node', function () {
       fs.copyFileSync('test/assets/complex.proto', '/tmp/test.proto');
       let n1 = helper.getNode('n1');
       setTimeout(() => {
-        n1.protoTypes.should.have.property('Zaehler_Waerme').which.is.a.Object();
+        assert.strictEqual(typeof n1.protoTypes.Zaehler_Waerme, 'object');
         done();
       }, 25);
     });

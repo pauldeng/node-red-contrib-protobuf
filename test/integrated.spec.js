@@ -1,4 +1,4 @@
-var should = require('should');
+const assert = require('node:assert');
 var helper = require('node-red-node-test-helper');
 var encode = require('../src/nodes/encode');
 var decode = require('../src/nodes/decode');
@@ -59,7 +59,6 @@ describe('protobuf integration test', function () {
 
     afterEach(function () {
         helper.unload();
-        should();
     });
 
     it('should encode and decode a message with idempotence', function (done) {
@@ -74,7 +73,7 @@ describe('protobuf integration test', function () {
             var encodeNode = helper.getNode('encode-node');
             var helperNode = helper.getNode('helper-node');
             helperNode.on('input', function (msg) {
-                JSON.stringify(testMessage).should.equal(JSON.stringify(msg.payload));
+                assert.deepStrictEqual(msg.payload, testMessage);
                 done();
             });
             encodeNode.receive({
