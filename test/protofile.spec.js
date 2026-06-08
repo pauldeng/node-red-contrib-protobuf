@@ -51,4 +51,43 @@ describe('protobuf protofile node', function () {
     });
   });
 
+  it('should keep each config node load state isolated', function (done) {
+    var flow = [
+      { id: 'n1', type: 'protobuf-file', name: 'test one', protopath: 'test/assets/test.proto' },
+      { id: 'n2', type: 'protobuf-file', name: 'test two', protopath: 'test/assets/issue3.proto' }
+    ];
+
+    helper.load(protofile, flow, function () {
+      var n1 = helper.getNode('n1');
+      n1.protopath = 'test/assets/issue3.proto';
+      n1.protoTypes = undefined;
+      n1.load();
+
+      try {
+        assert.strictEqual(typeof n1.protoTypes.Viessmann, 'object');
+        done();
+      }
+      catch (error) {
+        done(error);
+      }
+    });
+  });
+
+  it('should not watch file changes when watchFile is false', function (done) {
+    var flow = [{ id: 'n1', type: 'protobuf-file', name: 'test name', protopath: 'test/assets/test.proto', watchFile: false }];
+
+    helper.load(protofile, flow, function () {
+      var n1 = helper.getNode('n1');
+
+      try {
+        assert.strictEqual(n1.watchFile, false);
+        assert.strictEqual(n1.protoFileWatcher, undefined);
+        done();
+      }
+      catch (error) {
+        done(error);
+      }
+    });
+  });
+
 });

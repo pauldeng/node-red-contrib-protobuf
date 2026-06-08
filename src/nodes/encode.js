@@ -4,21 +4,41 @@ module.exports = function (RED) {
         // Retrieve the config node
         this.protofile = RED.nodes.getNode(config.protofile);
         this.protoType = config.protoType;
-        var node = this;
-        node.on('input', function (msg) {
+        const node = this;
+
+        function completeWithError (msg, done, error, statusText) {
+            node.status({fill: 'red', shape: 'dot', text: statusText});
+            if (done) {
+                done(error);
+            }
+            else {
+                node.error(error, msg);
+            }
+        }
+
+        function completeWithoutError (done) {
+            if (done) {
+                done();
+            }
+        }
+
+        function resolveMessageType (msg, done) {
             msg.protobufType = msg.protobufType || node.protoType;
             if (msg.protobufType === undefined) {
-                node.error('No protobuf type supplied!');
-                return node.status({fill: 'red', shape: 'dot', text: 'Protobuf type missing'});
+                completeWithError(msg, done, new Error('No protobuf type supplied!'), 'Protobuf type missing');
+                return undefined;
+            }
+            if (!node.protofile) {
+                completeWithError(msg, done, new Error('No .proto file configured!'), 'Protofile missing');
+                return undefined;
             }
             if (node.protofile.protoTypes === undefined) {
-                node.error('No .proto types loaded! Check that the file exists and that node-red has permission to access it.');
-                return node.status({fill: 'red', shape: 'dot', text: 'Protofile not ready'});
+                completeWithError(msg, done, new Error('No .proto types loaded! Check that the file exists and that node-red has permission to access it.'), 'Protofile not ready');
+                return undefined;
             }
             node.status({fill: 'green', shape: 'dot', text: 'Ready'});
-            let messageType;
             try {
-                messageType = node.protofile.protoTypes.lookupType(msg.protobufType);
+                return node.protofile.protoTypes.lookupType(msg.protobufType);
             }
             catch (error) {
                 node.warn(`
@@ -31,16 +51,27 @@ ${JSON.stringify(node.protofile.protoTypes)}
 With configured protoType:
 ${msg.protobufType}
                 `);
-                return node.status({fill: 'yellow', shape: 'dot', text: 'Message type not found'});
+                node.status({fill: 'yellow', shape: 'dot', text: 'Message type not found'});
+                completeWithoutError(done);
+                return undefined;
             }
+        }
+
+        node.on('input', function (msg, send, done) {
+            const messageType = resolveMessageType(msg, done);
+            if (!messageType) return;
+
             if (messageType.verify(msg.payload)) {
                 node.warn('Message is not valid under selected message type.');
-                return node.status({fill: 'yellow', shape: 'dot', text: 'Message invalid'});
+                node.status({fill: 'yellow', shape: 'dot', text: 'Message invalid'});
+                completeWithoutError(done);
+                return;
             }
             // create a protobuf message and convert it into a buffer
             msg.payload = messageType.encode(messageType.create(msg.payload)).finish();
             node.status({fill: 'green', shape: 'dot', text: 'Processed'});
-            node.send(msg);
+            send(msg);
+            completeWithoutError(done);
         });
     }
     RED.nodes.registerType('encode', ProtobufEncodeNode);

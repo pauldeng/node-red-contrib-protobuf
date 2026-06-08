@@ -1,20 +1,20 @@
 const { Root } = require('protobufjs');
-
-protobufjs = require('protobufjs');
-fs = require('fs');
+const fs = require('fs');
 
 module.exports = function (RED) {
     function ProtoFileNode (config) {
         RED.nodes.createNode(this, config);
-        if (config.protopath.includes(",")) {
-            this.protopath = config.protopath.split(",");
+        const configuredPath = config.protopath || '';
+        if (configuredPath.includes(',')) {
+            this.protopath = configuredPath.split(',');
         }
         else {
-            this.protopath = config.protopath;
+            this.protopath = configuredPath;
         }
-        this.watchFile = config.watchFile;
+        this.watchFile = config.watchFile !== false;
         this.keepCase = config.keepCase;
-        protoFileNode = this;
+        const protoFileNode = this;
+
         protoFileNode.load = function () {
             try {
                 protoFileNode.protoTypes = new Root().loadSync(protoFileNode.protopath, { keepCase: protoFileNode.keepCase });
@@ -23,7 +23,7 @@ module.exports = function (RED) {
                 protoFileNode.error('Proto file could not be loaded. ' + error);
             }
         };
-        protoFileNode.watchFile = function () {
+        protoFileNode.watchProtopath = function () {
             try {
                 // if it's an array, just watch the first one, it's most likely the one likely to change.
                 // As the subsequent files are more likely dependencies on the root.
@@ -38,7 +38,9 @@ module.exports = function (RED) {
                     }
                 });
                 protoFileNode.on('close', () => {
-                    protoFileNode.protoFileWatcher.close();
+                    if (protoFileNode.protoFileWatcher) {
+                        protoFileNode.protoFileWatcher.close();
+                    }
                 });
             }
             catch (error) {
@@ -46,7 +48,7 @@ module.exports = function (RED) {
             }
         };
         protoFileNode.load();
-        if (protoFileNode.protoTypes !== undefined && protoFileNode.watchFile) protoFileNode.watchFile();
+        if (protoFileNode.protoTypes !== undefined && protoFileNode.watchFile) protoFileNode.watchProtopath();
     }
     RED.nodes.registerType('protobuf-file', ProtoFileNode);
 };

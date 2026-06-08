@@ -1,4 +1,11 @@
-protobufjs = require('protobufjs');
+const protobufjs = require('protobufjs');
+
+const decodeOptions = {
+    longs: String,
+    enums: String,
+    bytes: String,
+    defaults: false, // includes default values, otherwise not transmitted values will be assigned their default value!
+};
 
 module.exports = function (RED) {
     function ProtobufDecodeNode (config) {
@@ -6,22 +13,41 @@ module.exports = function (RED) {
         // Retrieve the config node
         this.protofile = RED.nodes.getNode(config.protofile);
         this.protoType = config.protoType;
-        var node = this;
+        const node = this;
 
-        let resolveMessageType = function (msg) {
+        function completeWithError (msg, done, error, statusText) {
+            node.status({fill: 'red', shape: 'dot', text: statusText});
+            if (done) {
+                done(error);
+            }
+            else {
+                node.error(error, msg);
+            }
+        }
+
+        function completeWithoutError (done) {
+            if (done) {
+                done();
+            }
+        }
+
+        function resolveMessageType (msg, done) {
             msg.protobufType = msg.protobufType || node.protoType;
             if (msg.protobufType === undefined) {
-                node.error('No protobuf type supplied!');
-                return node.status({fill: 'red', shape: 'dot', text: 'Protobuf type missing'});
+                completeWithError(msg, done, new Error('No protobuf type supplied!'), 'Protobuf type missing');
+                return undefined;
+            }
+            if (!node.protofile) {
+                completeWithError(msg, done, new Error('No .proto file configured!'), 'Protofile missing');
+                return undefined;
             }
             if (node.protofile.protoTypes === undefined) {
-                node.error('No .proto types loaded! Check that the file exists and that node-red has permission to access it.');
-                return node.status({fill: 'red', shape: 'dot', text: 'Protofile not ready'});
+                completeWithError(msg, done, new Error('No .proto types loaded! Check that the file exists and that node-red has permission to access it.'), 'Protofile not ready');
+                return undefined;
             }
             node.status({fill: 'green', shape: 'dot', text: 'Ready'});
-            let messageType;
             try {
-                messageType = node.protofile.protoTypes.lookupType(msg.protobufType);
+                return node.protofile.protoTypes.lookupType(msg.protobufType);
             }
             catch (error) {
                 node.warn(`
@@ -35,38 +61,35 @@ With configured protoType:
 ${msg.protobufType}
                 `);
                 node.status({fill: 'yellow', shape: 'dot', text: 'Message type not found'});
+                completeWithoutError(done);
+                return undefined;
             }
-            return messageType;
-        };
+        }
 
-        node.on('input', function (msg) {
-            let messageType = resolveMessageType(msg);
+        node.on('input', function (msg, send, done) {
+            const messageType = resolveMessageType(msg, done);
             if (!messageType) return;
-            let message;
+
             try {
-                message = messageType.decode(msg.payload);
+                const message = messageType.decode(msg.payload);
+                msg.payload = messageType.toObject(message, decodeOptions);
             }
             catch (exception) {
                 if (exception instanceof protobufjs.util.ProtocolError) {
                     node.warn('Received message contains empty fields. Incomplete message will be forwarded.');
                     node.status({fill: 'yellow', shape: 'dot', text: 'Message incomplete'});
-                    msg.payload = e.instance;
-                    node.send(msg);
+                    msg.payload = messageType.toObject(exception.instance, decodeOptions);
+                    send(msg);
+                    completeWithoutError(done);
+                    return;
                 }
-                else {
-                    node.warn(`Wire format is invalid: ${exception}`);
-                    return node.status({fill: 'yellow', shape: 'dot', text: 'Wire format invalid'});
-                }
+                completeWithError(msg, done, new Error(`Wire format is invalid: ${exception.message}`), 'Wire format invalid');
+                return;
             }
-            let decodeOptions = {
-                longs: String,
-                enums: String,
-                bytes: String,
-                defaults: false, // includes default values, otherwise not transmitted values will be assigned their default value!
-            };
-            msg.payload = messageType.toObject(message, decodeOptions);
+
             node.status({fill: 'green', shape: 'dot', text: 'Processed'});
-            node.send(msg);
+            send(msg);
+            completeWithoutError(done);
         });
     }
     RED.nodes.registerType('decode', ProtobufDecodeNode);

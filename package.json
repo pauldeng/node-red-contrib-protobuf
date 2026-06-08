@@ -11,7 +11,7 @@
     "LICENCE"
   ],
   "scripts": {
-    "test": "mocha \"test/**/*spec.js\"",
+    "test": "mocha \"test/**/*spec.js\" --ignore \"test/ui/**/*.spec.js\"",
     "test:ui": "playwright test",
     "coverage": "nyc --reporter=text --reporter=lcov npm test",
     "lint": "eslint .",

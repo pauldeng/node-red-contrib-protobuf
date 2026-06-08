@@ -99,4 +99,33 @@ describe('protobuf encode node', function () {
     });
   });
 
+  it('should report a clear error when no protofile config node is configured', function (done) {
+    var flow = [{
+        id: 'encode-node',
+        type: 'encode',
+        z: 'e4c459b3.cc22e8',
+        protoType: 'TestType',
+        wires: [[]]
+      }];
+
+    helper.load(encode, flow, function () {
+      var encodeNode = helper.getNode('encode-node');
+
+      encodeNode.on('call:error', function (call) {
+        try {
+          assert.match(String(call.args[0]), /No \.proto file configured/);
+          done();
+        }
+        catch (error) {
+          done(error);
+        }
+      });
+
+      encodeNode.receive({
+        payload: {},
+        protobufType: 'TestType'
+      });
+    });
+  });
+
 });

@@ -2,6 +2,7 @@ const js = require('@eslint/js');
 
 const commonGlobals = {
     Buffer: 'readonly',
+    __dirname: 'readonly',
     clearTimeout: 'readonly',
     console: 'readonly',
     module: 'readonly',

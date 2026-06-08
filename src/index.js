@@ -1,9 +1,9 @@
-protobufencode = require('nodes/encode');
-protobufdecode = require('nodes/decode');
-protobuffile = require('nodes/protofile');
+const registerEncodeNode = require('./nodes/encode');
+const registerDecodeNode = require('./nodes/decode');
+const registerProtofileNode = require('./nodes/protofile');
 
 module.exports = function (RED) {
-    RED.nodes.registerType('protobuf-file', protobuffile.ProtoFileNode);
-    RED.nodes.registerType('encode', protobufencode.ProtobufEncodeNode);
-    RED.nodes.registerType('decode', protobufdecode.ProtobufDecodeNode);
+    registerProtofileNode(RED);
+    registerEncodeNode(RED);
+    registerDecodeNode(RED);
 };
