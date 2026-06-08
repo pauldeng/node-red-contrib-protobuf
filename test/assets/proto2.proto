@@ -1,0 +1,8 @@
+syntax = "proto2";
+
+message Proto2Type {
+    required string name = 1;
+    optional string note = 2 [default = "fallback note"];
+    optional int32 count = 3 [default = 7];
+    repeated string tags = 4;
+}

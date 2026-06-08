@@ -1,0 +1,103 @@
+package uncommon;
+
+import public 'common.proto';
+
+syntax = 'proto3';
+
+option java_package = 'com.google.protobuf';
+
+message Test;
+
+message Test2 {
+    float hex = 0x1 [default=0x1];
+    float oct = 02 [default=02];
+    float zero = 3 [default=0];
+    float inf = 4 [default=inf];
+    float nan = 5 [default=nan];
+
+    /** pre */
+    repeated group lower = 6 {}; /// post
+
+    /** pre */
+    map<string,string> ambiguousComments = 7; /// post
+
+    string str = 8 {
+        option default = "a";
+    }
+
+    map<string,string> strmap = 9 {
+        option (custom) = "";
+    };
+
+    map<uint64,Test> longmap = 10;
+
+    int32 optionTest = 11 [(my_options) = { a: "foo" b {} }];
+
+    /** pre */
+    oneof kind;
+    oneof kind2; /// post
+
+    /** pre */
+    oneof kind3 {
+        option (custom) = ""; /// post
+    };
+
+    option (custom) = -42;
+
+    extend Test;
+    extend Test{};
+    extend Test{required int32 a=1;} // not validated by the parser
+    extend Test{Test inner_ext=1000;} // not validated by the parser
+
+    extensions 1000 to 1999 [declaration = {
+        number: 1000
+        full_name: 'uncommon.Test.inner_ext'
+        type: 'uncommon.Test'
+    }];
+};
+
+enum Test3;
+
+enum Test4{
+    option (custom).foo = "";
+    ONE = 1 [foo="bar"];
+    TWO = 2 [(my_options) = { a: "foo" b { c: "bar" } }];
+    THREE = 3 {
+        option (custom).bar = "";
+    };
+};
+
+enum Test4_1{
+    OPTION = 1;
+}
+
+enum ReservedEnum{
+    RESERVED_UNKNOWN = 0;
+
+    reserved 1 to 5;
+    reserved "abc", "INVALID";
+    reserved 10;
+    reserved 11 to 20 {
+        option foo = true;
+    }
+}
+
+service Test5;
+
+service Test6 { option (custom).bar = "";
+    message DoSomethingRequest;
+    message DoSomethingResponse;
+
+    rpc DoSomething(stream DoSomethingRequest) returns (stream DoSomethingResponse){ option (custom).foo2 = ""; };
+    /** pre */
+    rpc DoSomethingElse(   stream DoSomethingRequest  ) returns (DoSomethingResponse); /// post
+    rpc DoSomethingEntirelyDifferent(DoSomethingRequest  ) returns (   stream DoSomethingResponse ); /// post
+};
+
+message Test7 {
+  repeated group RepeatedGroup = 1 {
+    optional string id = 2;
+    reserved 3;
+    optional string info = 4;
+  }
+}

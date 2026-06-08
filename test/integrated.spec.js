@@ -6,7 +6,7 @@ var protofile = require('../src/nodes/protofile');
 
 helper.init(require.resolve('node-red'));
 
-const generateIntegratedFlow = function(protoFilePath, protoType, keepCase) { 
+const generateIntegratedFlow = function(protoFilePath, protoType, keepCase) {
     return [
         {
             'id': 'encode-node',
@@ -53,7 +53,7 @@ const generateIntegratedFlow = function(protoFilePath, protoType, keepCase) {
             'keepCase': keepCase || false
         }
     ];
-}
+};
 
 describe('protobuf integration test', function () {
 
@@ -73,8 +73,13 @@ describe('protobuf integration test', function () {
             var encodeNode = helper.getNode('encode-node');
             var helperNode = helper.getNode('helper-node');
             helperNode.on('input', function (msg) {
-                assert.deepStrictEqual(msg.payload, testMessage);
-                done();
+                try {
+                    assert.deepStrictEqual(msg.payload, testMessage);
+                    done();
+                }
+                catch (error) {
+                    done(error);
+                }
             });
             encodeNode.receive({
                 payload: testMessage
@@ -91,8 +96,86 @@ describe('protobuf integration test', function () {
             var encodeNode = helper.getNode('encode-node');
             var helperNode = helper.getNode('helper-node');
             helperNode.on('input', function (msg) {
-                if (JSON.stringify(testMessage) !== JSON.stringify(msg.payload)) return done(Error(`encoded <-> decoded payloads not equal: ${JSON.stringify(testMessage)} !== ${JSON.stringify(msg.payload)}`))
-                done();
+                try {
+                    assert.deepStrictEqual(msg.payload, testMessage);
+                    done();
+                }
+                catch (error) {
+                    done(error);
+                }
+            });
+            encodeNode.receive({
+                payload: testMessage
+            });
+        });
+    });
+
+    it('should encode and decode a proto2 message with required, optional, and defaulted fields', function (done) {
+        helper.load([encode, decode, protofile], generateIntegratedFlow('test/assets/proto2.proto', 'Proto2Type'), function () {
+            let testMessage = {
+                name: 'proto2 message',
+                note: 'explicit note',
+                count: 7,
+                tags: ['required', 'optional', 'defaulted']
+            };
+            var encodeNode = helper.getNode('encode-node');
+            var helperNode = helper.getNode('helper-node');
+            helperNode.on('input', function (msg) {
+                try {
+                    assert.deepStrictEqual(msg.payload, testMessage);
+                    done();
+                }
+                catch (error) {
+                    done(error);
+                }
+            });
+            encodeNode.receive({
+                payload: testMessage
+            });
+        });
+    });
+
+    it('should encode and decode an edition 2023 message', function (done) {
+        helper.load([encode, decode, protofile], generateIntegratedFlow('test/assets/edition2023.proto', 'Edition2023Type'), function () {
+            let testMessage = {
+                name: 'edition 2023 message',
+                count: 2023,
+                tags: ['edition', '2023']
+            };
+            var encodeNode = helper.getNode('encode-node');
+            var helperNode = helper.getNode('helper-node');
+            helperNode.on('input', function (msg) {
+                try {
+                    assert.deepStrictEqual(msg.payload, testMessage);
+                    done();
+                }
+                catch (error) {
+                    done(error);
+                }
+            });
+            encodeNode.receive({
+                payload: testMessage
+            });
+        });
+    });
+
+    it('should encode and decode an edition 2024 message', function (done) {
+        helper.load([encode, decode, protofile], generateIntegratedFlow('test/assets/edition2024.proto', 'Edition2024Type'), function () {
+            let testMessage = {
+                name: 'edition 2024 message',
+                count: 2024,
+                tags: ['edition', '2024']
+            };
+            var encodeNode = helper.getNode('encode-node');
+            var helperNode = helper.getNode('helper-node');
+            helperNode.on('input', function (msg) {
+                try {
+                    assert.deepStrictEqual(msg.payload, testMessage);
+                    done();
+                }
+                catch (error) {
+                    done(error);
+                }
             });
             encodeNode.receive({
                 payload: testMessage

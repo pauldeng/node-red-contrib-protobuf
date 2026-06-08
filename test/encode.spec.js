@@ -128,4 +128,80 @@ describe('protobuf encode node', function () {
     });
   });
 
+  it('should warn when the payload is invalid for the configured message type', function (done) {
+    helper.load([encode, protofile], encodeFlow, function () {
+      var encodeNode = helper.getNode('encode-node');
+
+      encodeNode.on('call:warn', function (call) {
+        try {
+          assert.strictEqual(call.args[0], 'Message is not valid under selected message type.');
+          done();
+        }
+        catch (error) {
+          done(error);
+        }
+      });
+
+      encodeNode.receive({
+        payload: 'invalid payload'
+      });
+    });
+  });
+
+  it('should warn when the protobuf type is unknown', function (done) {
+    helper.load([encode, protofile], encodeFlow, function () {
+      var encodeNode = helper.getNode('encode-node');
+
+      encodeNode.on('call:warn', function (call) {
+        try {
+          assert.match(String(call.args[0]), /Problem while looking up the message type/);
+          done();
+        }
+        catch (error) {
+          done(error);
+        }
+      });
+
+      encodeNode.receive({
+        payload: {},
+        protobufType: 'MissingType'
+      });
+    });
+  });
+
+  it('should report an error when the configured proto file did not load', function (done) {
+    var flow = [{
+        id: 'encode-node',
+        type: 'encode',
+        z: 'e4c459b3.cc22e8',
+        protofile: 'proto-node',
+        protoType: 'TestType',
+        wires: [[]]
+      },
+      {
+        id: 'proto-node',
+        type: 'protobuf-file',
+        z: '',
+        protopath: 'test/assets/missing.proto'
+      }];
+
+    helper.load([encode, protofile], flow, function () {
+      var encodeNode = helper.getNode('encode-node');
+
+      encodeNode.on('call:error', function (call) {
+        try {
+          assert.match(String(call.args[0]), /No \.proto types loaded/);
+          done();
+        }
+        catch (error) {
+          done(error);
+        }
+      });
+
+      encodeNode.receive({
+        payload: {}
+      });
+    });
+  });
+
 });

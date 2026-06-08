@@ -15,7 +15,8 @@
     "test:ui": "playwright test",
     "coverage": "nyc --reporter=text --reporter=lcov npm test",
     "lint": "eslint .",
-    "lint-fix": "eslint . --fix"
+    "lint-fix": "eslint . --fix",
+    "update:protobufjs-fixtures": "node scripts/update-protobufjs-fixtures.js"
   },
   "repository": {
     "type": "git",
