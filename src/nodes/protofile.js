@@ -24,28 +24,35 @@ module.exports = function (RED) {
             }
         };
         protoFileNode.watchProtopath = function () {
-            try {
-                // if it's an array, just watch the first one, it's most likely the one likely to change.
-                // As the subsequent files are more likely dependencies on the root.
-                let watchedFile = protoFileNode.protopath;
-                if (Array.isArray(watchedFile)) {
-                    watchedFile = watchedFile[0];
+            const watchedFiles = Array.isArray(protoFileNode.protopath) ? protoFileNode.protopath : [protoFileNode.protopath];
+            // Editors and fs.watch can fire several change events per save,
+            // so changes are batched into a single reload of all files.
+            let reloadTimer = null;
+            const scheduleReload = function () {
+                clearTimeout(reloadTimer);
+                reloadTimer = setTimeout(() => {
+                    protoFileNode.load();
+                    protoFileNode.log('Protobuf file changed on disk. Reloaded.');
+                }, 50);
+            };
+            protoFileNode.protoFileWatchers = [];
+            for (const watchedFile of watchedFiles) {
+                try {
+                    protoFileNode.protoFileWatchers.push(fs.watch(watchedFile, (eventType) => {
+                        if (eventType === 'change') {
+                            scheduleReload();
+                        }
+                    }));
                 }
-                protoFileNode.protoFileWatcher = fs.watch(watchedFile, (eventType) => {
-                    if (eventType === 'change') {
-                        protoFileNode.load();
-                        protoFileNode.log('Protobuf file changed on disk. Reloaded.');
-                    }
-                });
-                protoFileNode.on('close', () => {
-                    if (protoFileNode.protoFileWatcher) {
-                        protoFileNode.protoFileWatcher.close();
-                    }
-                });
+                catch (error) {
+                    protoFileNode.error(`Error when trying to watch ${watchedFile} on disk: ` + error);
+                }
             }
-            catch (error) {
-                protoFileNode.error('Error when trying to watch the file on disk: ' + error);
-            }
+            protoFileNode.on('close', () => {
+                clearTimeout(reloadTimer);
+                protoFileNode.protoFileWatchers.forEach((watcher) => watcher.close());
+                protoFileNode.protoFileWatchers = [];
+            });
         };
         protoFileNode.load();
         if (protoFileNode.protoTypes !== undefined && protoFileNode.watchFile) protoFileNode.watchProtopath();

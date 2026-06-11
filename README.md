@@ -25,7 +25,7 @@ npm install node-red-contrib-protobuf
     2. with the `msg.protobufType` field (takes precedence over node configuration)
 4. Either send a `protobuf` encoded payload to the decode node or a `JSON` encoded payload to the encode node
 
-*Note on the protofile node* The proto file node watches the specified file(s) for changes on the filesystem through nodejs fs API. If the file contents of the `.proto`-file change on disk, the file becomes reloaded. This may happen multiple times at once due to OS and editor specifics. If multiple comma-separated paths are specified, only the first one is monitored right now to save some resources.
+*Note on the protofile node* The proto file node watches the specified file(s) for changes on the filesystem through nodejs fs API. If the file contents of a `.proto`-file change on disk, all configured files become reloaded. Every comma-separated path is watched; rapid consecutive changes (common with some editors and operating systems) are batched into a single reload.
 
 ## Examples
 

@@ -386,7 +386,7 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
         await expect(page.locator('label[for="node-config-input-keepCase"]')).toContainText('Keep case');
         await expect(page.locator('text=Keep names like')).toBeVisible();
         await expect(page.locator('#node-config-protopath-tip')).toContainText('Use commas to load multiple .proto files');
-        await expect(page.locator('#node-config-watch-tip')).toContainText('With multiple files, only the first is watched');
+        await expect(page.locator('#node-config-watch-tip')).toContainText('All listed files are watched');
         await page.locator('#node-config-dialog-cancel').click();
         await closeNodeDialog(page);
 
@@ -422,7 +422,7 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
         expect(decodeHelp).toContain('partial decoded message');
         expect(protofileHelp).toContain('Use commas to load multiple');
         expect(protofileHelp).toContain('/flows/protos/messages.proto,/flows/protos/common.proto');
-        expect(protofileHelp).toContain('With multiple files, only the first is watched');
+        expect(protofileHelp).toContain('All listed files are watched');
         expect(protofileHelp).toContain('keepCase');
         expect(protofileHelp).toContain('device_id');
         expect(protofileHelp).toContain('deviceId');

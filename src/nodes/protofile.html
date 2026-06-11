@@ -27,10 +27,10 @@
     <div class="form-row">
         <label for="node-config-input-watchFile"><i class="fa fa-refresh"></i> Watch file</label>
         <input type="checkbox" id="node-config-input-watchFile" style="display: inline-block; width: auto; vertical-align: top;">
-        <span>Reload when the primary proto file changes</span>
+        <span>Reload when a listed proto file changes</span>
     </div>
     <div class="form-tips" id="node-config-watch-tip">
-        With multiple files, only the first is watched.
+        All listed files are watched. Rapid changes trigger a single reload.
     </div>
     <div class="form-row">
         <label for="node-config-input-keepCase"><i class="fa fa-code"></i> Keep case</label>
@@ -46,12 +46,12 @@
         <dt>Proto path <span class="property-type">string</span></dt>
         <dd>Path to a <code>.proto</code> file. Use commas to load multiple files.</dd>
         <dt>Watch file <span class="property-type">boolean</span></dt>
-        <dd>Reloads the protobuf root when the first configured file changes.</dd>
+        <dd>Reloads the protobuf root when any configured file changes.</dd>
         <dt>Keep case <span class="property-type">boolean</span></dt>
         <dd>Passes <code>keepCase</code> to protobuf.js so snake_case field names stay unchanged.</dd>
     </dl>
     <h3>Details</h3>
-    <p>Use commas to load multiple <code>.proto</code> files. With multiple files, only the first is watched.</p>
+    <p>Use commas to load multiple <code>.proto</code> files. All listed files are watched; rapid changes trigger a single reload.</p>
     <p>Example: <code>/flows/protos/messages.proto,/flows/protos/common.proto</code>.</p>
     <p>By default protobuf.js converts snake_case field names to camelCase. Enable <code>keepCase</code> to keep snake_case names in encoded and decoded objects.</p>
     <p>Example: <code>device_id</code> stays <code>device_id</code> instead of becoming <code>deviceId</code>.</p>

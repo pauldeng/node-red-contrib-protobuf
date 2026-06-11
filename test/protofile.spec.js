@@ -37,11 +37,11 @@ describe('protobuf protofile node', function () {
       setTimeout(() => {
         assert.strictEqual(typeof n1.protoTypes.Zaehler_Waerme, 'object');
         done();
-      }, 25);
+      }, 200);
     });
   });
 
-  it('should only watch the first file when multiple files are configured', function (done) {
+  it('should reload when any configured file changes', function (done) {
     var tmpDir = fs.mkdtempSync('/tmp/node-red-protobuf-watch-');
     var firstProto = `${tmpDir}/first.proto`;
     var secondProto = `${tmpDir}/second.proto`;
@@ -58,31 +58,39 @@ describe('protobuf protofile node', function () {
     helper.load(protofile, flow, function () {
       var n1 = helper.getNode('n1');
 
+      try {
+        assert.strictEqual(n1.protoFileWatchers.length, 2, 'every configured file should have a watcher');
+      }
+      catch (error) {
+        return finish(error);
+      }
+
       fs.copyFileSync('test/assets/complex.proto', secondProto);
 
       setTimeout(() => {
         try {
           assert.strictEqual(typeof n1.protoTypes.TestType, 'object');
-          assert.strictEqual(typeof n1.protoTypes.Viessmann, 'object');
-          assert.strictEqual(n1.protoTypes.Zaehler_Waerme, undefined);
+          assert.strictEqual(typeof n1.protoTypes.Zaehler_Waerme, 'object', 'a change to the second file should trigger a reload');
+          assert.strictEqual(n1.protoTypes.Viessmann, undefined);
 
           fs.copyFileSync('test/assets/proto2.proto', firstProto);
 
           setTimeout(() => {
             try {
-              assert.strictEqual(typeof n1.protoTypes.Proto2Type, 'object');
+              assert.strictEqual(typeof n1.protoTypes.Proto2Type, 'object', 'a change to the first file should trigger a reload');
+              assert.strictEqual(n1.protoTypes.TestType, undefined);
               assert.strictEqual(typeof n1.protoTypes.Zaehler_Waerme, 'object');
               finish();
             }
             catch (error) {
               finish(error);
             }
-          }, 100);
+          }, 250);
         }
         catch (error) {
           finish(error);
         }
-      }, 100);
+      }, 250);
     });
   });
 
@@ -126,7 +134,7 @@ describe('protobuf protofile node', function () {
 
       try {
         assert.strictEqual(n1.watchFile, false);
-        assert.strictEqual(n1.protoFileWatcher, undefined);
+        assert.strictEqual(n1.protoFileWatchers, undefined);
         done();
       }
       catch (error) {
