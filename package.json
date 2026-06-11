@@ -33,7 +33,7 @@
   },
   "homepage": "https://github.com/pauldeng/node-red-contrib-protobuf#README",
   "engines": {
-    "node": ">=18.5"
+    "node": ">=20.19.0"
   },
   "node-red": {
     "version": ">=4.1.0",
@@ -44,15 +44,15 @@
     }
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.4",
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.60.0",
-    "eslint": "^9.39.4",
+    "eslint": "^10.4.1",
     "mocha": "^11.7.6",
-    "node-red": "^4.1.11",
+    "node-red": "^5.0.0",
     "node-red-node-test-helper": "^0.3.6",
-    "nyc": "^17.1.0"
+    "nyc": "^18.0.0"
   },
   "dependencies": {
-    "protobufjs": "^8.6.1"
+    "protobufjs": "^8.6.3"
   }
 }
