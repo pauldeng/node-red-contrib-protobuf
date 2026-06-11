@@ -1,0 +1,71 @@
+[
+    {
+        "id": "edition2024-trip-comment",
+        "type": "comment",
+        "name": "Protobuf Editions: edition 2024",
+        "info": "This flow encodes and decodes an `Edition2024Type` message defined with `edition = \"2024\"`.\n\nEdition 2024 refines the feature defaults introduced by edition 2023; the message definition syntax is unchanged. See the official guide for what each edition changes.\n\nGuide: https://protobuf.dev/programming-guides/editions/\n\nThe protobuf-file config node points at:\n\n    node_modules/node-red-contrib-protobuf/examples/protos/edition2024.proto\n\nThis relative path works when Node-RED runs from your user directory (for example `~/.node-red`). If the proto file fails to load, open the protobuf-file config node and enter the absolute path on your machine.",
+        "x": 250,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "edition2024-trip-inject",
+        "type": "inject",
+        "name": "send Edition2024Type payload",
+        "props": [
+            { "p": "payload", "v": "{\"name\":\"edition 2024 message\",\"count\":2024,\"tags\":[\"edition\",\"2024\"]}", "vt": "json" },
+            { "p": "topic", "v": "", "vt": "str" }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 220,
+        "y": 140,
+        "wires": [["edition2024-trip-encode"]]
+    },
+    {
+        "id": "edition2024-trip-encode",
+        "type": "encode",
+        "name": "",
+        "protofile": "edition2024-trip-protofile",
+        "protoType": "Edition2024Type",
+        "x": 460,
+        "y": 140,
+        "wires": [["edition2024-trip-decode"]]
+    },
+    {
+        "id": "edition2024-trip-decode",
+        "type": "decode",
+        "name": "",
+        "protofile": "edition2024-trip-protofile",
+        "protoType": "Edition2024Type",
+        "x": 650,
+        "y": 140,
+        "wires": [["edition2024-trip-debug"]]
+    },
+    {
+        "id": "edition2024-trip-debug",
+        "type": "debug",
+        "name": "decoded object",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 860,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "edition2024-trip-protofile",
+        "type": "protobuf-file",
+        "protopath": "node_modules/node-red-contrib-protobuf/examples/protos/edition2024.proto",
+        "watchFile": false,
+        "keepCase": false
+    }
+]

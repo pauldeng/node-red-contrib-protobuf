@@ -1,0 +1,71 @@
+[
+    {
+        "id": "proto3-trip-comment",
+        "type": "comment",
+        "name": "proto3: implicit presence and camelCase names",
+        "info": "This flow encodes and decodes a `TestType` message defined with `syntax = \"proto3\"`.\n\nproto3 features shown in `examples/protos/proto3.proto`:\n\n- All fields are optional with implicit presence: an unset field encodes nothing and decodes to its zero value (`0`, `false`, `\"\"`).\n- The field `no_more_snake_case` appears as `noMoreSnakeCase` in JavaScript objects because protobuf.js converts snake_case to camelCase by default. Enable \"Keep case\" on the protobuf-file config node to keep snake_case names.\n\nThe protobuf-file config node points at:\n\n    node_modules/node-red-contrib-protobuf/examples/protos/proto3.proto\n\nThis relative path works when Node-RED runs from your user directory (for example `~/.node-red`). If the proto file fails to load, open the protobuf-file config node and enter the absolute path on your machine.",
+        "x": 250,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "proto3-trip-inject",
+        "type": "inject",
+        "name": "send TestType payload",
+        "props": [
+            { "p": "payload", "v": "{\"timestamp\":1533295590569,\"foo\":1.5,\"bar\":true,\"test\":\"Hello from the proto3 example\",\"noMoreSnakeCase\":true}", "vt": "json" },
+            { "p": "topic", "v": "", "vt": "str" }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 200,
+        "y": 140,
+        "wires": [["proto3-trip-encode"]]
+    },
+    {
+        "id": "proto3-trip-encode",
+        "type": "encode",
+        "name": "",
+        "protofile": "proto3-trip-protofile",
+        "protoType": "TestType",
+        "x": 430,
+        "y": 140,
+        "wires": [["proto3-trip-decode"]]
+    },
+    {
+        "id": "proto3-trip-decode",
+        "type": "decode",
+        "name": "",
+        "protofile": "proto3-trip-protofile",
+        "protoType": "TestType",
+        "x": 620,
+        "y": 140,
+        "wires": [["proto3-trip-debug"]]
+    },
+    {
+        "id": "proto3-trip-debug",
+        "type": "debug",
+        "name": "decoded object",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 830,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "proto3-trip-protofile",
+        "type": "protobuf-file",
+        "protopath": "node_modules/node-red-contrib-protobuf/examples/protos/proto3.proto",
+        "watchFile": false,
+        "keepCase": false
+    }
+]

@@ -1,0 +1,15 @@
+// proto3 example schema.
+// proto3 fields have implicit presence: an unset field encodes nothing
+// and decodes to its zero value (0, false, or "").
+syntax = "proto3";
+
+message TestType {
+    double timestamp = 1;
+    float foo = 2;
+    bool bar = 3;
+    string test = 4;
+    // protobuf.js converts snake_case names to camelCase by default,
+    // so this field appears as noMoreSnakeCase in decoded objects.
+    // Enable "Keep case" on the protobuf-file node to keep snake_case.
+    bool no_more_snake_case = 5;
+}

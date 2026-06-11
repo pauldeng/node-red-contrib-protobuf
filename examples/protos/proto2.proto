@@ -1,0 +1,13 @@
+// proto2 example schema.
+// proto2 supports required fields, explicit optional fields, and
+// custom default values - features that proto3 removed or changed.
+syntax = "proto2";
+
+message Proto2Type {
+    // Encoding fails if a required field is missing.
+    required string name = 1;
+    // Optional fields fall back to their declared default when unset.
+    optional string note = 2 [default = "fallback note"];
+    optional int32 count = 3 [default = 7];
+    repeated string tags = 4;
+}

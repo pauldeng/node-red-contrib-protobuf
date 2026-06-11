@@ -267,6 +267,54 @@ test('Node-RED editor flow encodes and decodes a protobuf message', async ({ pag
     }
 });
 
+test('Node-RED import menu lists the packaged example flows', async ({ page }) => {
+    const nodeRed = await startNodeRed();
+
+    try {
+        await page.goto(nodeRed.baseUrl);
+        await page.waitForFunction(() => globalThis.RED && globalThis.RED.nodes && globalThis.RED.nodes.node('encode-node'));
+
+        await page.evaluate(() => globalThis.RED.actions.invoke('core:show-examples-import-dialog'));
+        await expect(page.locator('#red-ui-clipboard-dialog')).toBeVisible();
+
+        const examplesTab = page.locator('#red-ui-clipboard-dialog-import-tab-examples');
+        const packageEntry = examplesTab.locator('.red-ui-treeList-label', { hasText: 'node-red-contrib-protobuf' });
+        await expect(packageEntry).toBeVisible();
+        await packageEntry.locator('i.fa-angle-right').click();
+
+        const exampleNames = [
+            '01 encode basics',
+            '02 decode basics',
+            '03 proto2 round trip',
+            '04 proto3 round trip',
+            '05 edition 2023 round trip',
+            '06 edition 2024 round trip',
+        ];
+        for (const name of exampleNames) {
+            await expect(examplesTab.locator('.red-ui-treeList-label', { hasText: name })).toBeVisible();
+        }
+
+        await examplesTab.locator('.red-ui-treeList-label', { hasText: '04 proto3 round trip' }).click();
+        await page.locator('#red-ui-clipboard-dialog-ok').click();
+
+        await page.waitForFunction(() => {
+            let imported = 0;
+            globalThis.RED.nodes.eachNode((node) => {
+                if (node.type === 'encode') {
+                    imported += 1;
+                }
+            });
+            return imported >= 2;
+        });
+    }
+    catch (error) {
+        throw new Error(`${error.message}\nNode-RED output:\n${nodeRed.processOutput.join('')}`, { cause: error });
+    }
+    finally {
+        await nodeRed.stop();
+    }
+});
+
 test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({ page }) => {
     const nodeRed = await startNodeRed();
 

@@ -1,0 +1,11 @@
+// Protobuf Editions example schema (edition 2024).
+// Edition 2024 refines the 2023 feature defaults; the message syntax
+// below is unchanged from edition 2023.
+// Guide: https://protobuf.dev/programming-guides/editions/
+edition = "2024";
+
+message Edition2024Type {
+    string name = 1;
+    int32 count = 2;
+    repeated string tags = 3;
+}

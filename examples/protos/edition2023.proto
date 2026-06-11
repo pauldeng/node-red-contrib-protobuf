@@ -1,0 +1,11 @@
+// Protobuf Editions example schema (edition 2023).
+// Editions replace the proto2/proto3 syntax split with per-feature
+// settings. Fields here use explicit presence by default.
+// Guide: https://protobuf.dev/programming-guides/editions/
+edition = "2023";
+
+message Edition2023Type {
+    string name = 1;
+    int32 count = 2;
+    repeated string tags = 3;
+}

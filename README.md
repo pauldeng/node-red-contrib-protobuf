@@ -27,6 +27,19 @@ npm install node-red-contrib-protobuf
 
 *Note on the protofile node* The proto file node watches the specified file(s) for changes on the filesystem through nodejs fs API. If the file contents of the `.proto`-file change on disk, the file becomes reloaded. This may happen multiple times at once due to OS and editor specifics. If multiple comma-separated paths are specified, only the first one is monitored right now to save some resources.
 
+## Examples
+
+This package ships importable example flows. In the Node-RED editor, open **Menu > Import > Examples > node-red-contrib-protobuf** and pick one:
+
+1. **encode basics** - turn a JavaScript object into protobuf wire bytes
+2. **decode basics** - turn protobuf wire bytes back into a JavaScript object
+3. **proto2 round trip** - `required`, `optional`, and default values
+4. **proto3 round trip** - implicit presence and snake_case to camelCase conversion
+5. **edition 2023 round trip** - Protobuf Editions schema
+6. **edition 2024 round trip** - Protobuf Editions schema
+
+The matching schemas live in `examples/protos/`. Each flow's comment node explains what it shows. The protobuf-file config nodes use the relative path `node_modules/node-red-contrib-protobuf/examples/protos/...`; if the proto file fails to load, edit the config node and enter the absolute path on your machine.
+
 ## Features
 
 * Encode JSON payload to protobuf messages

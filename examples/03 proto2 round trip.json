@@ -1,0 +1,71 @@
+[
+    {
+        "id": "proto2-trip-comment",
+        "type": "comment",
+        "name": "proto2: required, optional, and default values",
+        "info": "This flow encodes and decodes a `Proto2Type` message defined with `syntax = \"proto2\"`.\n\nproto2 features shown in `examples/protos/proto2.proto`:\n\n- `required string name` - encoding fails if it is missing. Try removing `name` from the inject payload and watch the encode node raise an error.\n- `optional` fields with `[default = ...]` - decoded messages fall back to the declared default when the field was not sent.\n- `repeated string tags` - a list field.\n\nThe protobuf-file config node points at:\n\n    node_modules/node-red-contrib-protobuf/examples/protos/proto2.proto\n\nThis relative path works when Node-RED runs from your user directory (for example `~/.node-red`). If the proto file fails to load, open the protobuf-file config node and enter the absolute path on your machine.",
+        "x": 250,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "proto2-trip-inject",
+        "type": "inject",
+        "name": "send Proto2Type payload",
+        "props": [
+            { "p": "payload", "v": "{\"name\":\"proto2 message\",\"note\":\"explicit note\",\"count\":7,\"tags\":[\"required\",\"optional\",\"defaulted\"]}", "vt": "json" },
+            { "p": "topic", "v": "", "vt": "str" }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 200,
+        "y": 140,
+        "wires": [["proto2-trip-encode"]]
+    },
+    {
+        "id": "proto2-trip-encode",
+        "type": "encode",
+        "name": "",
+        "protofile": "proto2-trip-protofile",
+        "protoType": "Proto2Type",
+        "x": 430,
+        "y": 140,
+        "wires": [["proto2-trip-decode"]]
+    },
+    {
+        "id": "proto2-trip-decode",
+        "type": "decode",
+        "name": "",
+        "protofile": "proto2-trip-protofile",
+        "protoType": "Proto2Type",
+        "x": 620,
+        "y": 140,
+        "wires": [["proto2-trip-debug"]]
+    },
+    {
+        "id": "proto2-trip-debug",
+        "type": "debug",
+        "name": "decoded object",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 830,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "proto2-trip-protofile",
+        "type": "protobuf-file",
+        "protopath": "node_modules/node-red-contrib-protobuf/examples/protos/proto2.proto",
+        "watchFile": false,
+        "keepCase": false
+    }
+]
