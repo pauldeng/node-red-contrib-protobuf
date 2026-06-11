@@ -55,4 +55,20 @@
     <p>Example: <code>/flows/protos/messages.proto,/flows/protos/common.proto</code>.</p>
     <p>By default protobuf.js converts snake_case field names to camelCase. Enable <code>keepCase</code> to keep snake_case names in encoded and decoded objects.</p>
     <p>Example: <code>device_id</code> stays <code>device_id</code> instead of becoming <code>deviceId</code>.</p>
+    <h3>Example</h3>
+    <p>A minimal proto3 schema file:</p>
+    <pre>syntax = "proto3";
+
+message SensorReading {
+    string device_id = 1;
+    double value = 2;
+}</pre>
+    <p>Load it here, then set the encode/decode <b>Type</b> field to <code>SensorReading</code>.</p>
+    <h3>References</h3>
+    <ul>
+        <li><a href="https://protobuf.dev/programming-guides/proto3/" target="_blank">proto3 language guide</a></li>
+        <li><a href="https://protobuf.dev/programming-guides/proto2/" target="_blank">proto2 language guide</a> - <code>required</code>, <code>optional</code>, and default values</li>
+        <li><a href="https://protobuf.dev/programming-guides/editions/" target="_blank">Protobuf Editions</a> - edition 2023 and 2024 schemas</li>
+        <li><a href="https://protobufjs.github.io/protobuf.js/Root.html" target="_blank">protobuf.js Root API</a> - file loading and the <code>keepCase</code> option</li>
+    </ul>
 </script>

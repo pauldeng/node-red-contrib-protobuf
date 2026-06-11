@@ -108,4 +108,23 @@
     <p>If a proto2 message is incomplete but protobuf.js can recover fields, the node sends a partial decoded message.</p>
     <p>If the buffer cannot be decoded, the node reports an error and does not send a message.</p>
     <p>With <b>Delimited</b> enabled, the buffer may contain several length-prefixed messages back to back. By default the node sends one message per decoded item, so each payload looks the same as in non-delimited mode. Choose the array output to receive a single message whose payload is an array of all decoded objects. If any frame is corrupted, the node reports an error and sends nothing.</p>
+    <h3>Example</h3>
+    <p>With message type <code>TestType</code> selected, a wire-format buffer decodes back into:</p>
+    <pre>{
+    "timestamp": 1533295590569,
+    "foo": 1.5,
+    "bar": true,
+    "test": "hello"
+}</pre>
+    <p>With <b>Delimited</b> enabled and a buffer holding two framed messages, the default output sends two messages; the array output sends one message with:</p>
+    <pre>[
+    { "test": "first" },
+    { "test": "second" }
+]</pre>
+    <h3>References</h3>
+    <ul>
+        <li><a href="https://protobufjs.github.io/protobuf.js/Type.html" target="_blank">protobuf.js Type API</a> - the <code>decode</code>, <code>decodeDelimited</code>, and <code>toObject</code> methods this node uses</li>
+        <li><a href="https://protobuf.dev/programming-guides/encoding/" target="_blank">Protobuf encoding (wire format)</a> - how messages are represented as bytes</li>
+        <li><a href="https://protobuf.dev/programming-guides/techniques/#streaming" target="_blank">Streaming multiple messages</a> - why length-delimited framing exists</li>
+    </ul>
 </script>

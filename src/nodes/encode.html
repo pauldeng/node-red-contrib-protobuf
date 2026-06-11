@@ -100,4 +100,24 @@
     <p>msg.protobufType overrides the configured message type.</p>
     <p>If the payload does not match the selected type, the node reports a warning and does not send a message.</p>
     <p>With <b>Delimited</b> enabled, the payload may be a single object or an array of objects. Each object becomes one length-prefixed message and the output buffer contains them back to back - the framing used for streams and files of concatenated messages.</p>
+    <h3>Example</h3>
+    <p>With message type <code>TestType</code> selected, this <code>msg.payload</code>:</p>
+    <pre>{
+    "timestamp": 1533295590569,
+    "foo": 1.5,
+    "bar": true,
+    "test": "hello"
+}</pre>
+    <p>becomes a binary wire-format buffer such as <code>&lt;Buffer 09 00 90 ca 9f f8 4f 76 42 ...&gt;</code>.</p>
+    <p>With <b>Delimited</b> enabled, an array becomes one buffer holding each message with its byte-length prefix:</p>
+    <pre>[
+    { "test": "first" },
+    { "test": "second" }
+]</pre>
+    <h3>References</h3>
+    <ul>
+        <li><a href="https://protobufjs.github.io/protobuf.js/Type.html" target="_blank">protobuf.js Type API</a> - the <code>verify</code>, <code>encode</code>, and <code>encodeDelimited</code> methods this node uses</li>
+        <li><a href="https://protobuf.dev/programming-guides/encoding/" target="_blank">Protobuf encoding (wire format)</a> - how messages are represented as bytes</li>
+        <li><a href="https://protobuf.dev/programming-guides/techniques/#streaming" target="_blank">Streaming multiple messages</a> - why length-delimited framing exists</li>
+    </ul>
 </script>

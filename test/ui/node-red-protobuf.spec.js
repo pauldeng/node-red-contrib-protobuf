@@ -434,8 +434,17 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
 
         expect(encodeHelp).toContain('msg.protobufType overrides the configured message type');
         expect(encodeHelp).toContain('Delimited');
+        expect(encodeHelp).toContain('Example');
+        expect(encodeHelp).toContain('https://protobufjs.github.io/protobuf.js/Type.html');
+        expect(encodeHelp).toContain('https://protobuf.dev/programming-guides/encoding/');
         expect(decodeHelp).toContain('partial decoded message');
         expect(decodeHelp).toContain('one message per decoded item');
+        expect(decodeHelp).toContain('Example');
+        expect(decodeHelp).toContain('https://protobufjs.github.io/protobuf.js/Type.html');
+        expect(decodeHelp).toContain('https://protobuf.dev/programming-guides/techniques/#streaming');
+        expect(protofileHelp).toContain('syntax = "proto3"');
+        expect(protofileHelp).toContain('https://protobuf.dev/programming-guides/editions/');
+        expect(protofileHelp).toContain('https://protobufjs.github.io/protobuf.js/Root.html');
         expect(protofileHelp).toContain('Use commas to load multiple');
         expect(protofileHelp).toContain('/flows/protos/messages.proto,/flows/protos/common.proto');
         expect(protofileHelp).toContain('All listed files are watched');
