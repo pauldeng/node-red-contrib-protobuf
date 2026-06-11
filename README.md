@@ -37,6 +37,7 @@ This package ships importable example flows. In the Node-RED editor, open **Menu
 4. **proto3 round trip** - implicit presence and snake_case to camelCase conversion
 5. **edition 2023 round trip** - Protobuf Editions schema
 6. **edition 2024 round trip** - Protobuf Editions schema
+7. **delimited stream** - several length-prefixed messages in one buffer
 
 The matching schemas live in `examples/protos/`. Each flow's comment node explains what it shows. The protobuf-file config nodes use the relative path `node_modules/node-red-contrib-protobuf/examples/protos/...`; if the proto file fails to load, edit the config node and enter the absolute path on your machine.
 
@@ -44,6 +45,7 @@ The matching schemas live in `examples/protos/`. Each flow's comment node explai
 
 * Encode JSON payload to protobuf messages
 * Decode protobuf messages to JSON payload
+* Encode and decode length-delimited message streams (protobuf.js `encodeDelimited`/`decodeDelimited`)
 * Load protobuf file(s) from the local file system
 * Consider protos from one or multiple protobuf files (including inheritance)
 

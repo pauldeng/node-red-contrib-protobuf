@@ -1,9 +1,12 @@
+const protobufjs = require('protobufjs');
+
 module.exports = function (RED) {
     function ProtobufEncodeNode (config) {
         RED.nodes.createNode(this, config);
         // Retrieve the config node
         this.protofile = RED.nodes.getNode(config.protofile);
         this.protoType = config.protoType;
+        this.delimited = config.delimited === true;
         const node = this;
 
         function completeWithError (msg, done, error, statusText) {
@@ -60,6 +63,28 @@ ${msg.protobufType}
         node.on('input', function (msg, send, done) {
             const messageType = resolveMessageType(msg, done);
             if (!messageType) return;
+
+            if (node.delimited) {
+                // Each payload object becomes one length-prefixed message in a single buffer.
+                const payloads = Array.isArray(msg.payload) ? msg.payload : [msg.payload];
+                for (const [index, payload] of payloads.entries()) {
+                    if (messageType.verify(payload)) {
+                        node.warn(`Message at index ${index} is not valid under selected message type.`);
+                        node.status({fill: 'yellow', shape: 'dot', text: 'Message invalid'});
+                        completeWithoutError(done);
+                        return;
+                    }
+                }
+                const writer = protobufjs.Writer.create();
+                for (const payload of payloads) {
+                    messageType.encodeDelimited(messageType.create(payload), writer);
+                }
+                msg.payload = writer.finish();
+                node.status({fill: 'green', shape: 'dot', text: 'Processed'});
+                send(msg);
+                completeWithoutError(done);
+                return;
+            }
 
             if (messageType.verify(msg.payload)) {
                 node.warn('Message is not valid under selected message type.');

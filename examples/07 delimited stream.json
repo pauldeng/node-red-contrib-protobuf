@@ -1,0 +1,74 @@
+[
+    {
+        "id": "delimited-stream-comment",
+        "type": "comment",
+        "name": "Delimited: a stream of length-prefixed messages",
+        "info": "Delimited framing prefixes every message with its byte length, so several messages can travel back to back in one buffer - the format used for TCP streams and files of concatenated protobuf messages.\n\nBoth nodes have **Delimited** enabled here:\n\n- The encode node accepts a single object or an array. The inject payload is an array of three objects, so the output buffer contains three length-prefixed messages.\n- The decode node reads every message in the buffer. By default it sends **one message per decoded item** (three debug entries). Open the decode node and switch the Output option to receive a single message with an array payload instead.\n\nThe protobuf-file config node points at:\n\n    node_modules/node-red-contrib-protobuf/examples/protos/proto3.proto\n\nThis relative path works when Node-RED runs from your user directory (for example `~/.node-red`). If the proto file fails to load, open the protobuf-file config node and enter the absolute path on your machine.",
+        "x": 250,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "delimited-stream-inject",
+        "type": "inject",
+        "name": "send three TestType payloads",
+        "props": [
+            { "p": "payload", "v": "[{\"test\":\"first\",\"bar\":true},{\"test\":\"second\",\"foo\":2.5},{\"test\":\"third\",\"timestamp\":1533295590569}]", "vt": "json" },
+            { "p": "topic", "v": "", "vt": "str" }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 220,
+        "y": 140,
+        "wires": [["delimited-stream-encode"]]
+    },
+    {
+        "id": "delimited-stream-encode",
+        "type": "encode",
+        "name": "",
+        "protofile": "delimited-stream-protofile",
+        "protoType": "TestType",
+        "delimited": true,
+        "x": 460,
+        "y": 140,
+        "wires": [["delimited-stream-decode"]]
+    },
+    {
+        "id": "delimited-stream-decode",
+        "type": "decode",
+        "name": "",
+        "protofile": "delimited-stream-protofile",
+        "protoType": "TestType",
+        "delimited": true,
+        "delimitedOutput": "messages",
+        "x": 650,
+        "y": 140,
+        "wires": [["delimited-stream-debug"]]
+    },
+    {
+        "id": "delimited-stream-debug",
+        "type": "debug",
+        "name": "decoded items",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 850,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "delimited-stream-protofile",
+        "type": "protobuf-file",
+        "protopath": "node_modules/node-red-contrib-protobuf/examples/protos/proto3.proto",
+        "watchFile": false,
+        "keepCase": false
+    }
+]

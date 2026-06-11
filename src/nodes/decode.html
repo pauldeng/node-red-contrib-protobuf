@@ -6,6 +6,8 @@
             name: { value: "" },
             protofile: { value: "", type: "protobuf-file", required: true, label: "Proto file" },
             protoType: { value: "", required: false },
+            delimited: { value: false },
+            delimitedOutput: { value: "messages" },
         },
         inputs: 1,
         outputs: 1,
@@ -14,6 +16,15 @@
         outputLabels: "object",
         label: function() {
             return this.name || "decode";
+        },
+        oneditprepare: function() {
+            var delimitedCheckbox = $("#node-input-delimited");
+            var outputRow = $("#node-input-delimitedOutput-row");
+            var toggleOutputRow = function() {
+                outputRow.toggle(delimitedCheckbox.is(":checked"));
+            };
+            delimitedCheckbox.on("change", toggleOutputRow);
+            toggleOutputRow();
         }
     });
 </script>
@@ -33,6 +44,18 @@
     </div>
     <div class="form-tips" id="node-input-protobuf-type-tip">
         When <code>msg.protobufType</code> is set, the value overrides this field.
+    </div>
+    <div class="form-row">
+        <label for="node-input-delimited"><i class="fa fa-list-ol"></i> Delimited</label>
+        <input type="checkbox" id="node-input-delimited" style="display: inline-block; width: auto; vertical-align: top;">
+        <span>Read length-prefixed messages (stream framing)</span>
+    </div>
+    <div class="form-row" id="node-input-delimitedOutput-row">
+        <label for="node-input-delimitedOutput"><i class="fa fa-sign-out"></i> Output</label>
+        <select id="node-input-delimitedOutput" style="width: 70%;">
+            <option value="messages">One message per decoded item</option>
+            <option value="array">Single message with array payload</option>
+        </select>
     </div>
 </script>
 
@@ -74,10 +97,15 @@
         <dd>Required protobuf-file configuration node.</dd>
         <dt>Type <span class="property-type">string</span></dt>
         <dd>Optional when <code>msg.protobufType</code> is set.</dd>
+        <dt>Delimited <span class="property-type">boolean</span></dt>
+        <dd>Reads length-prefixed messages (protobuf.js <code>decodeDelimited</code>). Off by default.</dd>
+        <dt>Output <span class="property-type">select</span></dt>
+        <dd>How decoded delimited messages are sent: one message per decoded item, or a single message with an array payload.</dd>
     </dl>
     <h3>Details</h3>
     <p>The node decodes <code>msg.payload</code> with protobuf.js and converts longs, enums, and bytes to strings.</p>
     <p>msg.protobufType overrides the configured message type.</p>
     <p>If a proto2 message is incomplete but protobuf.js can recover fields, the node sends a partial decoded message.</p>
     <p>If the buffer cannot be decoded, the node reports an error and does not send a message.</p>
+    <p>With <b>Delimited</b> enabled, the buffer may contain several length-prefixed messages back to back. By default the node sends one message per decoded item, so each payload looks the same as in non-delimited mode. Choose the array output to receive a single message whose payload is an array of all decoded objects. If any frame is corrupted, the node reports an error and sends nothing.</p>
 </script>

@@ -289,6 +289,7 @@ test('Node-RED import menu lists the packaged example flows', async ({ page }) =
             '04 proto3 round trip',
             '05 edition 2023 round trip',
             '06 edition 2024 round trip',
+            '07 delimited stream',
         ];
         for (const name of exampleNames) {
             await expect(examplesTab.locator('.red-ui-treeList-label', { hasText: name })).toBeVisible();
@@ -335,6 +336,7 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
                     protoTypeRequired: encode.defaults.protoType.required,
                     inputLabel: encode.inputLabels,
                     outputLabel: encode.outputLabels,
+                    delimitedDefault: encode.defaults.delimited && encode.defaults.delimited.value,
                 },
                 decode: {
                     color: decode.color,
@@ -343,6 +345,8 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
                     protoTypeRequired: decode.defaults.protoType.required,
                     inputLabel: decode.inputLabels,
                     outputLabel: decode.outputLabels,
+                    delimitedDefault: decode.defaults.delimited && decode.defaults.delimited.value,
+                    delimitedOutputDefault: decode.defaults.delimitedOutput && decode.defaults.delimitedOutput.value,
                 },
                 protofile: {
                     hasPrototypesDefault: Object.prototype.hasOwnProperty.call(protofile.defaults, 'prototypes'),
@@ -363,12 +367,16 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
         expect(definitions.decode.outputLabel).toBe('object');
         expect(definitions.protofile.hasPrototypesDefault).toBe(false);
         expect(definitions.protofile.protopathRequired).toBe(true);
+        expect(definitions.encode.delimitedDefault).toBe(false);
+        expect(definitions.decode.delimitedDefault).toBe(false);
+        expect(definitions.decode.delimitedOutputDefault).toBe('messages');
 
         await openNodeDialog(page, 'encode-node');
         await expect(page.locator('label[for="node-input-protofile"]')).toContainText('Proto file');
         await expect(page.locator('label[for="node-input-protoType"]')).toContainText('Type');
         await expect(page.locator('#node-input-protoType')).toHaveAttribute('placeholder', 'Example: package.Message');
         await expect(page.locator('#node-input-protobuf-type-tip')).toContainText('When msg.protobufType is set, the value overrides this field');
+        await expect(page.locator('#node-input-delimited')).toBeVisible();
         await closeNodeDialog(page);
 
         await openNodeDialog(page, 'decode-node');
@@ -376,6 +384,12 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
         await expect(page.locator('label[for="node-input-protoType"]')).toContainText('Type');
         await expect(page.locator('#node-input-protoType')).toHaveAttribute('placeholder', 'Example: package.Message');
         await expect(page.locator('#node-input-protobuf-type-tip')).toContainText('When msg.protobufType is set, the value overrides this field');
+        await expect(page.locator('#node-input-delimited')).toBeVisible();
+        await expect(page.locator('#node-input-delimitedOutput-row')).toBeHidden();
+        await page.locator('#node-input-delimited').check();
+        await expect(page.locator('#node-input-delimitedOutput-row')).toBeVisible();
+        await page.locator('#node-input-delimited').uncheck();
+        await expect(page.locator('#node-input-delimitedOutput-row')).toBeHidden();
         await closeNodeDialog(page);
 
         await openNodeDialog(page, 'encode-node');
@@ -419,7 +433,9 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
         const protofileHelp = await getNodeHelpText(page, 'protobuf-file');
 
         expect(encodeHelp).toContain('msg.protobufType overrides the configured message type');
+        expect(encodeHelp).toContain('Delimited');
         expect(decodeHelp).toContain('partial decoded message');
+        expect(decodeHelp).toContain('one message per decoded item');
         expect(protofileHelp).toContain('Use commas to load multiple');
         expect(protofileHelp).toContain('/flows/protos/messages.proto,/flows/protos/common.proto');
         expect(protofileHelp).toContain('All listed files are watched');

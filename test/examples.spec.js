@@ -19,7 +19,8 @@ const examples = {
     '03 proto2 round trip.json': { proto: 'proto2.proto', protoType: 'Proto2Type', kind: 'roundtrip' },
     '04 proto3 round trip.json': { proto: 'proto3.proto', protoType: 'TestType', kind: 'roundtrip' },
     '05 edition 2023 round trip.json': { proto: 'edition2023.proto', protoType: 'Edition2023Type', kind: 'roundtrip' },
-    '06 edition 2024 round trip.json': { proto: 'edition2024.proto', protoType: 'Edition2024Type', kind: 'roundtrip' }
+    '06 edition 2024 round trip.json': { proto: 'edition2024.proto', protoType: 'Edition2024Type', kind: 'roundtrip' },
+    '07 delimited stream.json': { proto: 'proto3.proto', protoType: 'TestType', kind: 'delimited' }
 };
 
 const allowedNodeTypes = ['comment', 'inject', 'function', 'debug', 'encode', 'decode', 'protobuf-file'];
@@ -103,6 +104,9 @@ describe('packaged example flows', function () {
                 nodes.filter(node => ['encode', 'decode'].includes(node.type)).forEach(node => {
                     assert.strictEqual(node.protofile, configNode.id, `${node.type} node must reference the example config node`);
                     assert.strictEqual(node.protoType, expected.protoType);
+                    if (expected.kind === 'delimited') {
+                        assert.strictEqual(node.delimited, true, `${node.type} node must enable delimited mode`);
+                    }
                 });
             });
 
@@ -116,6 +120,30 @@ describe('packaged example flows', function () {
                         helper.getNode(helperId).on('input', function (msg) {
                             try {
                                 assert.deepStrictEqual(msg.payload, payload);
+                                done();
+                            }
+                            catch (error) {
+                                done(error);
+                            }
+                        });
+                        helper.getNode(encodeId).receive({ payload: payload });
+                    });
+                });
+            }
+
+            if (expected.kind === 'delimited') {
+                it('should stream each decoded item as its own message', function (done) {
+                    const nodes = readExample(fileName);
+                    const payload = getInjectPayload(nodes);
+                    const encodeId = nodes.find(node => node.type === 'encode').id;
+                    const helperId = nodes.find(node => node.type === 'debug').id;
+                    helper.load([encode, decode, protofile], buildRuntimeFlow(nodes), function () {
+                        const received = [];
+                        helper.getNode(helperId).on('input', function (msg) {
+                            received.push(msg.payload);
+                            if (received.length < payload.length) return;
+                            try {
+                                assert.deepStrictEqual(received, payload);
                                 done();
                             }
                             catch (error) {

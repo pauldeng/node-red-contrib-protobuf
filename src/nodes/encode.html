@@ -16,6 +16,9 @@
                 value: "",
                 required: false
             },
+            delimited: {
+                value: false
+            },
         },
         inputs: 1,
         outputs: 1,
@@ -43,6 +46,11 @@
     </div>
     <div class="form-tips" id="node-input-protobuf-type-tip">
         When <code>msg.protobufType</code> is set, the value overrides this field.
+    </div>
+    <div class="form-row">
+        <label for="node-input-delimited"><i class="fa fa-list-ol"></i> Delimited</label>
+        <input type="checkbox" id="node-input-delimited" style="display: inline-block; width: auto; vertical-align: top;">
+        <span>Length-prefix each message (stream framing)</span>
     </div>
 </script>
 
@@ -84,9 +92,12 @@
         <dd>Required protobuf-file configuration node.</dd>
         <dt>Type <span class="property-type">string</span></dt>
         <dd>Optional when <code>msg.protobufType</code> is set.</dd>
+        <dt>Delimited <span class="property-type">boolean</span></dt>
+        <dd>Prefixes each message with its byte length (protobuf.js <code>encodeDelimited</code>). Off by default.</dd>
     </dl>
     <h3>Details</h3>
     <p>The node verifies <code>msg.payload</code> against the selected protobuf message type and encodes it with protobuf.js.</p>
     <p>msg.protobufType overrides the configured message type.</p>
     <p>If the payload does not match the selected type, the node reports a warning and does not send a message.</p>
+    <p>With <b>Delimited</b> enabled, the payload may be a single object or an array of objects. Each object becomes one length-prefixed message and the output buffer contains them back to back - the framing used for streams and files of concatenated messages.</p>
 </script>
