@@ -222,6 +222,25 @@ async function startNodeRed () {
     };
 }
 
+async function openNodeDialog (page, nodeId) {
+    await page.evaluate((id) => {
+        globalThis.RED.editor.edit(globalThis.RED.nodes.node(id));
+    }, nodeId);
+    await expect(page.locator('#dialog-form')).toBeVisible();
+}
+
+async function closeNodeDialog (page) {
+    await page.locator('#node-dialog-cancel').click();
+    await expect(page.locator('#dialog-form')).toBeHidden();
+}
+
+async function getNodeHelpText (page, type) {
+    return page.evaluate((nodeType) => {
+        const help = globalThis.document.querySelector(`script[data-help-name="${nodeType}"]`);
+        return help ? help.textContent : '';
+    }, type);
+}
+
 test('Node-RED editor flow encodes and decodes a protobuf message', async ({ page }) => {
     const nodeRed = await startNodeRed();
 
@@ -241,7 +260,127 @@ test('Node-RED editor flow encodes and decodes a protobuf message', async ({ pag
         await expect(debugPayload).toContainText('1533295590569');
     }
     catch (error) {
-        throw new Error(`${error.message}\nNode-RED output:\n${nodeRed.processOutput.join('')}`);
+        throw new Error(`${error.message}\nNode-RED output:\n${nodeRed.processOutput.join('')}`, { cause: error });
+    }
+    finally {
+        await nodeRed.stop();
+    }
+});
+
+test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({ page }) => {
+    const nodeRed = await startNodeRed();
+
+    try {
+        await page.goto(nodeRed.baseUrl);
+        await page.waitForFunction(() => globalThis.RED && globalThis.RED.nodes && globalThis.RED.nodes.node('encode-node'));
+
+        const definitions = await page.evaluate(() => {
+            const encode = globalThis.RED.nodes.getType('encode');
+            const decode = globalThis.RED.nodes.getType('decode');
+            const protofile = globalThis.RED.nodes.getType('protobuf-file');
+
+            return {
+                encode: {
+                    color: encode.color,
+                    icon: encode.icon,
+                    protofileRequired: encode.defaults.protofile.required,
+                    protoTypeRequired: encode.defaults.protoType.required,
+                    inputLabel: encode.inputLabels,
+                    outputLabel: encode.outputLabels,
+                },
+                decode: {
+                    color: decode.color,
+                    icon: decode.icon,
+                    protofileRequired: decode.defaults.protofile.required,
+                    protoTypeRequired: decode.defaults.protoType.required,
+                    inputLabel: decode.inputLabels,
+                    outputLabel: decode.outputLabels,
+                },
+                protofile: {
+                    hasPrototypesDefault: Object.prototype.hasOwnProperty.call(protofile.defaults, 'prototypes'),
+                    protopathRequired: protofile.defaults.protopath.required,
+                },
+            };
+        });
+
+        expect(definitions.encode.color).not.toBe(definitions.decode.color);
+        expect(definitions.encode.icon).not.toBe(definitions.decode.icon);
+        expect(definitions.encode.protofileRequired).toBe(true);
+        expect(definitions.decode.protofileRequired).toBe(true);
+        expect(definitions.encode.protoTypeRequired).toBe(false);
+        expect(definitions.decode.protoTypeRequired).toBe(false);
+        expect(definitions.encode.inputLabel).toBe('object');
+        expect(definitions.encode.outputLabel).toBe('protobuf buffer');
+        expect(definitions.decode.inputLabel).toBe('protobuf buffer');
+        expect(definitions.decode.outputLabel).toBe('object');
+        expect(definitions.protofile.hasPrototypesDefault).toBe(false);
+        expect(definitions.protofile.protopathRequired).toBe(true);
+
+        await openNodeDialog(page, 'encode-node');
+        await expect(page.locator('label[for="node-input-protofile"]')).toContainText('Proto file');
+        await expect(page.locator('label[for="node-input-protoType"]')).toContainText('Type');
+        await expect(page.locator('#node-input-protoType')).toHaveAttribute('placeholder', 'Example: package.Message');
+        await expect(page.locator('#node-input-protobuf-type-tip')).toContainText('When msg.protobufType is set, the value overrides this field');
+        await closeNodeDialog(page);
+
+        await openNodeDialog(page, 'decode-node');
+        await expect(page.locator('label[for="node-input-protofile"]')).toContainText('Proto file');
+        await expect(page.locator('label[for="node-input-protoType"]')).toContainText('Type');
+        await expect(page.locator('#node-input-protoType')).toHaveAttribute('placeholder', 'Example: package.Message');
+        await expect(page.locator('#node-input-protobuf-type-tip')).toContainText('When msg.protobufType is set, the value overrides this field');
+        await closeNodeDialog(page);
+
+        await openNodeDialog(page, 'encode-node');
+        await page.locator('#node-input-btn-protofile-edit').click();
+        await expect(page.locator('#node-config-input-protopath')).toBeVisible();
+        await expect(page.locator('label[for="node-config-input-protopath"]')).toContainText('Proto path');
+        await expect(page.locator('label[for="node-config-input-watchFile"]')).toContainText('Watch file');
+        await expect(page.locator('label[for="node-config-input-keepCase"]')).toContainText('Keep case');
+        await expect(page.locator('text=Keep names like')).toBeVisible();
+        await expect(page.locator('#node-config-protopath-tip')).toContainText('Use commas to load multiple .proto files');
+        await expect(page.locator('#node-config-watch-tip')).toContainText('With multiple files, only the first is watched');
+        await page.locator('#node-config-dialog-cancel').click();
+        await closeNodeDialog(page);
+
+        await expect(page.locator('.red-ui-palette-node[data-palette-type="encode"]')).toBeVisible();
+        await expect(page.locator('.red-ui-palette-node[data-palette-type="decode"]')).toBeVisible();
+
+        await expect(page.locator('.red-ui-palette-node[data-palette-type="encode"] .red-ui-palette-label')).toHaveText('encode');
+        await expect(page.locator('.red-ui-palette-node[data-palette-type="decode"] .red-ui-palette-label')).toHaveText('decode');
+
+        const scriptTypes = await page.evaluate(() => {
+            const types = {};
+            for (const nodeType of ['encode', 'decode', 'protobuf-file']) {
+                const template = globalThis.document.querySelector(`script[data-template-name="${nodeType}"]`);
+                const help = globalThis.document.querySelector(`script[data-help-name="${nodeType}"]`);
+                types[nodeType] = {
+                    template: template && template.getAttribute('type'),
+                    help: help && help.getAttribute('type'),
+                };
+            }
+            return types;
+        });
+
+        for (const nodeType of ['encode', 'decode', 'protobuf-file']) {
+            expect(scriptTypes[nodeType].template).toBe('text/html');
+            expect(scriptTypes[nodeType].help).toBe('text/html');
+        }
+
+        const encodeHelp = await getNodeHelpText(page, 'encode');
+        const decodeHelp = await getNodeHelpText(page, 'decode');
+        const protofileHelp = await getNodeHelpText(page, 'protobuf-file');
+
+        expect(encodeHelp).toContain('msg.protobufType overrides the configured message type');
+        expect(decodeHelp).toContain('partial decoded message');
+        expect(protofileHelp).toContain('Use commas to load multiple');
+        expect(protofileHelp).toContain('/flows/protos/messages.proto,/flows/protos/common.proto');
+        expect(protofileHelp).toContain('With multiple files, only the first is watched');
+        expect(protofileHelp).toContain('keepCase');
+        expect(protofileHelp).toContain('device_id');
+        expect(protofileHelp).toContain('deviceId');
+    }
+    catch (error) {
+        throw new Error(`${error.message}\nNode-RED output:\n${nodeRed.processOutput.join('')}`, { cause: error });
     }
     finally {
         await nodeRed.stop();

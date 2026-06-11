@@ -2,31 +2,57 @@
     RED.nodes.registerType('protobuf-file', {
         category: 'config',
         defaults: {
-            protopath: { value: "", required: true },
-            prototypes: { value: "" },
+            protopath: { value: "", required: true, label: "Proto path" },
             watchFile: { value: true },
             keepCase: { value: false }
         },
         label: function() {
-            return this.protopath;
+            var primaryPath = (this.protopath || "").split(",")[0].trim();
+            if (!primaryPath) {
+                return "protobuf file";
+            }
+            return primaryPath.split(/[\\/]/).pop() || primaryPath;
         }
     });
 </script>
 
-<script type="text/x-red" data-template-name="protobuf-file">
+<script type="text/html" data-template-name="protobuf-file">
     <div class="form-row">
-        <label for="node-config-input-protopath"><i class="icon-file"></i> Path</label>
-        <input type="text" id="node-config-input-protopath"/>
-        <label for="node-config-input-watchFile"> Watch File</label>
-        <input type="checkbox" id="node-config-input-watchFile"/>
-        <label for="node-config-input-watchFile"> Keep snake_case (underscores)</label>
-        <input type="checkbox" id="node-config-input-keepCase"/>
+        <label for="node-config-input-protopath"><i class="fa fa-file-code-o"></i> Proto path</label>
+        <input type="text" id="node-config-input-protopath" placeholder="/path/to/schema.proto">
+    </div>
+    <div class="form-tips" id="node-config-protopath-tip">
+        Use commas to load multiple .proto files.
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-watchFile"><i class="fa fa-refresh"></i> Watch file</label>
+        <input type="checkbox" id="node-config-input-watchFile" style="display: inline-block; width: auto; vertical-align: top;">
+        <span>Reload when the primary proto file changes</span>
+    </div>
+    <div class="form-tips" id="node-config-watch-tip">
+        With multiple files, only the first is watched.
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-keepCase"><i class="fa fa-code"></i> Keep case</label>
+        <input type="checkbox" id="node-config-input-keepCase" style="display: inline-block; width: auto; vertical-align: top;">
+        <span>Keep names like <code>device_id</code></span>
     </div>
 </script>
 
-<script type="text/x-red" data-help-name="protobuf-file">
-    <p>Provide a path to a .proto definition file. If multiple files are needed (e.g. dependencies) then separate them with commas</p>
+<script type="text/html" data-help-name="protobuf-file">
+    <p>Loads one or more protobuf schema files for encode and decode nodes.</p>
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt>Proto path <span class="property-type">string</span></dt>
+        <dd>Path to a <code>.proto</code> file. Use commas to load multiple files.</dd>
+        <dt>Watch file <span class="property-type">boolean</span></dt>
+        <dd>Reloads the protobuf root when the first configured file changes.</dd>
+        <dt>Keep case <span class="property-type">boolean</span></dt>
+        <dd>Passes <code>keepCase</code> to protobuf.js so snake_case field names stay unchanged.</dd>
+    </dl>
     <h3>Details</h3>
-    <p>If the underlying .proto file changes the node will be notified and update the running copy. Currently only the first file in the list is watched due to performance reasons.</p>
-    <p>By default snake_case is converted to camelCase when loading proto files. To disable this conversion use the "keep case" option.</p>
+    <p>Use commas to load multiple <code>.proto</code> files. With multiple files, only the first is watched.</p>
+    <p>Example: <code>/flows/protos/messages.proto,/flows/protos/common.proto</code>.</p>
+    <p>By default protobuf.js converts snake_case field names to camelCase. Enable <code>keepCase</code> to keep snake_case names in encoded and decoded objects.</p>
+    <p>Example: <code>device_id</code> stays <code>device_id</code> instead of becoming <code>deviceId</code>.</p>
 </script>

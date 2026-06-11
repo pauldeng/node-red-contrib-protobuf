@@ -41,6 +41,51 @@ describe('protobuf protofile node', function () {
     });
   });
 
+  it('should only watch the first file when multiple files are configured', function (done) {
+    var tmpDir = fs.mkdtempSync('/tmp/node-red-protobuf-watch-');
+    var firstProto = `${tmpDir}/first.proto`;
+    var secondProto = `${tmpDir}/second.proto`;
+    var flow = [{ id: 'n1', type: 'protobuf-file', name: 'test name', protopath: `${firstProto},${secondProto}` }];
+
+    fs.copyFileSync('test/assets/test.proto', firstProto);
+    fs.copyFileSync('test/assets/issue3.proto', secondProto);
+
+    const finish = function (error) {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+      done(error);
+    };
+
+    helper.load(protofile, flow, function () {
+      var n1 = helper.getNode('n1');
+
+      fs.copyFileSync('test/assets/complex.proto', secondProto);
+
+      setTimeout(() => {
+        try {
+          assert.strictEqual(typeof n1.protoTypes.TestType, 'object');
+          assert.strictEqual(typeof n1.protoTypes.Viessmann, 'object');
+          assert.strictEqual(n1.protoTypes.Zaehler_Waerme, undefined);
+
+          fs.copyFileSync('test/assets/proto2.proto', firstProto);
+
+          setTimeout(() => {
+            try {
+              assert.strictEqual(typeof n1.protoTypes.Proto2Type, 'object');
+              assert.strictEqual(typeof n1.protoTypes.Zaehler_Waerme, 'object');
+              finish();
+            }
+            catch (error) {
+              finish(error);
+            }
+          }, 100);
+        }
+        catch (error) {
+          finish(error);
+        }
+      }, 100);
+    });
+  });
+
   it('should load multiple files', function (done) {
     var flow = [{ id: 'n1', type: 'protobuf-file', name: 'test name', protopath: 'test/assets/test.proto,test/assets/issue3.proto' }];
     helper.load(protofile, flow, function () {

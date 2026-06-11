@@ -1,61 +1,66 @@
 <script type="text/javascript">
     RED.nodes.registerType('encode', {
         category: 'protobuf',
-        color: '#C0DEED',
+        color: '#C7E9C0',
         defaults: {
             name: {
                 value: ""
             },
             protofile: {
                 value: "",
-                type: "protobuf-file"
+                type: "protobuf-file",
+                required: true,
+                label: "Proto file"
             },
             protoType: {
-                value: ""
+                value: "",
+                required: false
             },
         },
         inputs: 1,
         outputs: 1,
-        icon: "hash.png",
+        icon: "font-awesome/fa-compress",
+        inputLabels: "object",
+        outputLabels: "protobuf buffer",
         label: function () {
             return this.name || "encode";
         }
     });
 </script>
 
-<script type="text/x-red" data-template-name="encode">
+<script type="text/html" data-template-name="encode">
     <div class="form-row">
-        <label for="node-input-name">
-            <i class="icon-tag"></i> Name</label>
-        <input type="text" id="node-input-name" placeholder="Name">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Optional display name">
     </div>
     <div class="form-row">
-        <label for="node-input-protofile">
-            <i class="icon-file"></i> Proto File</label>
+        <label for="node-input-protofile"><i class="fa fa-file-code-o"></i> Proto file</label>
         <input type="text" id="node-input-protofile">
     </div>
     <div class="form-row">
-        <label for="node-input-protoType">
-            <i class="icon-tag"></i> Type</label>
-        <input type="text" id="node-input-protoType" placeholder="Proto Message Type">
+        <label for="node-input-protoType"><i class="fa fa-cube"></i> Type</label>
+        <input type="text" id="node-input-protoType" placeholder="Example: package.Message">
+    </div>
+    <div class="form-tips" id="node-input-protobuf-type-tip">
+        When <code>msg.protobufType</code> is set, the value overrides this field.
     </div>
 </script>
 
-<script type="text/x-red" data-help-name="encode">
-    <p>Select a proto type definition from a proto file and encode incoming messages.</p>
+<script type="text/html" data-help-name="encode">
+    <p>Encodes a JavaScript object into a protobuf binary buffer.</p>
     <h3>Inputs</h3>
     <dl class="message-properties">
         <dt>payload
             <span class="property-type">object</span>
         </dt>
         <dd>
-            a javascript object reflecting the fields provided in the specified protobuf type.
+            JavaScript object containing fields for the selected protobuf message type.
         </dd>
         <dt>protobufType
             <span class="property-type">string</span>
         </dt>
         <dd>
-            the identifier string of the corresponding protobuf type definition of the message.
+            Optional protobuf message type name. This value overrides the configured message type.
         </dd>
     </dl>
     <h3>Outputs</h3>
@@ -64,16 +69,24 @@
             <span class="property-type">buffer</span>
         </dt>
         <dd>
-            a buffer binary message containing the protobuf encoded message.
+            Protobuf-encoded binary message.
         </dd>
         <dt>protobufType
             <span class="property-type">string</span>
         </dt>
         <dd>
-            the identifier string of the corresponding protobuf type definition of the message
+            Message type used for encoding.
         </dd>
     </dl>
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt>Proto file <span class="property-type">config</span></dt>
+        <dd>Required protobuf-file configuration node.</dd>
+        <dt>Type <span class="property-type">string</span></dt>
+        <dd>Optional when <code>msg.protobufType</code> is set.</dd>
+    </dl>
     <h3>Details</h3>
-    <p>When supplied with a protobuf type from the protofile the node will encode the message with protobufjs defaults into a binary buffer object.</p>
-    <p>The protobufType from a message always takes precedence over the node defined type.</p>
+    <p>The node verifies <code>msg.payload</code> against the selected protobuf message type and encodes it with protobuf.js.</p>
+    <p>msg.protobufType overrides the configured message type.</p>
+    <p>If the payload does not match the selected type, the node reports a warning and does not send a message.</p>
 </script>

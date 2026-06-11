@@ -110,6 +110,29 @@ describe('protobuf integration test', function () {
         });
     });
 
+    it('should encode and decode camelCase field names when keepCase is false', function (done) {
+        helper.load([encode, decode, protofile], generateIntegratedFlow('test/assets/issue29.proto', 'Department', false), function () {
+            let testMessage = {
+                departmentId: 12345,
+                name: 'Test department'
+            };
+            var encodeNode = helper.getNode('encode-node');
+            var helperNode = helper.getNode('helper-node');
+            helperNode.on('input', function (msg) {
+                try {
+                    assert.deepStrictEqual(msg.payload, testMessage);
+                    done();
+                }
+                catch (error) {
+                    done(error);
+                }
+            });
+            encodeNode.receive({
+                payload: testMessage
+            });
+        });
+    });
+
     it('should encode and decode a proto2 message with required, optional, and defaulted fields', function (done) {
         helper.load([encode, decode, protofile], generateIntegratedFlow('test/assets/proto2.proto', 'Proto2Type'), function () {
             let testMessage = {

@@ -1,51 +1,56 @@
 <script type="text/javascript">
     RED.nodes.registerType('decode', {
         category: 'protobuf',
-        color: '#C0DEED',
+        color: '#FDD0A2',
         defaults: {
             name: { value: "" },
-            protofile: { value: "", type: "protobuf-file" },
-            protoType: { value: "" },
+            protofile: { value: "", type: "protobuf-file", required: true, label: "Proto file" },
+            protoType: { value: "", required: false },
         },
         inputs: 1,
         outputs: 1,
-        icon: "hash.png",
+        icon: "font-awesome/fa-expand",
+        inputLabels: "protobuf buffer",
+        outputLabels: "object",
         label: function() {
             return this.name || "decode";
         }
     });
 </script>
 
-<script type="text/x-red" data-template-name="decode">
+<script type="text/html" data-template-name="decode">
     <div class="form-row">
-        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
-        <input type="text" id="node-input-name" placeholder="Name">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Optional display name">
     </div>
     <div class="form-row">
-        <label for="node-input-protofile"><i class="icon-file"></i> Proto File</label>
+        <label for="node-input-protofile"><i class="fa fa-file-code-o"></i> Proto file</label>
         <input type="text" id="node-input-protofile">
     </div>
     <div class="form-row">
-        <label for="node-input-protoType"><i class="icon-tag"></i> Type</label>
-        <input type="text" id="node-input-protoType" placeholder="Proto Message Type">
+        <label for="node-input-protoType"><i class="fa fa-cube"></i> Type</label>
+        <input type="text" id="node-input-protoType" placeholder="Example: package.Message">
+    </div>
+    <div class="form-tips" id="node-input-protobuf-type-tip">
+        When <code>msg.protobufType</code> is set, the value overrides this field.
     </div>
 </script>
 
-<script type="text/x-red" data-help-name="decode">
-    <p>Select a proto type definition from a proto file to decode incoming messages.</p>
+<script type="text/html" data-help-name="decode">
+    <p>Decodes a protobuf binary buffer into a JavaScript object.</p>
     <h3>Inputs</h3>
     <dl class="message-properties">
         <dt>payload
             <span class="property-type">buffer</span>
         </dt>
         <dd>
-            a buffer binary message containing the protobuf encoded message.
+            Protobuf-encoded binary message.
         </dd>
         <dt>protobufType
             <span class="property-type">string</span>
         </dt>
         <dd>
-            the identifier string of the corresponding protobuf type definition of the message.
+            Optional protobuf message type name. This value overrides the configured message type.
         </dd>
     </dl>
     <h3>Outputs</h3>
@@ -54,18 +59,25 @@
             <span class="property-type">object</span>
         </dt>
         <dd>
-            a javascript object containing the protobuf decoded message fields.
+            JavaScript object containing decoded protobuf fields.
         </dd>
         <dt>protobufType
             <span class="property-type">string</span>
         </dt>
         <dd>
-            the identifier string of the corresponding protobuf type definition of the message
+            Message type used for decoding.
         </dd>
     </dl>
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt>Proto file <span class="property-type">config</span></dt>
+        <dd>Required protobuf-file configuration node.</dd>
+        <dt>Type <span class="property-type">string</span></dt>
+        <dd>Optional when <code>msg.protobufType</code> is set.</dd>
+    </dl>
     <h3>Details</h3>
-    <p>When supplied with a protobuf type from the protofile the node will decode the message into a javascript object.</p>
-    <p>The protobufType from a message always takes precedence over the node defined type.</p>
-    <p>The current settings are set such that longs, enums and strings are decoded into string and default values are not taken into account.</p>
-    <p>If a message is incomplete regarding the protobuf type all fields that can be decoded will be decoded resulting in a partial decoded message at the output.</p>
+    <p>The node decodes <code>msg.payload</code> with protobuf.js and converts longs, enums, and bytes to strings.</p>
+    <p>msg.protobufType overrides the configured message type.</p>
+    <p>If a proto2 message is incomplete but protobuf.js can recover fields, the node sends a partial decoded message.</p>
+    <p>If the buffer cannot be decoded, the node reports an error and does not send a message.</p>
 </script>
