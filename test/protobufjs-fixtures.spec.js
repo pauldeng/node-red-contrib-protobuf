@@ -88,6 +88,14 @@ const createProtoFileNode = function (config) {
         ProtoFileNode = nodeConstructor;
       },
     },
+    httpAdmin: {
+      post: function () {},
+    },
+    auth: {
+      needsPermission: function () {
+        return function (req, res, next) { next(); };
+      },
+    },
   };
 
   protofile(RED);

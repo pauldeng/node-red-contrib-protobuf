@@ -402,6 +402,17 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
         await expect(page.locator('text=Keep names like')).toBeVisible();
         await expect(page.locator('#node-config-protopath-tip')).toContainText('Use commas to load multiple .proto files');
         await expect(page.locator('#node-config-watch-tip')).toContainText('All listed files are watched');
+
+        // Validate button lists the message types for the configured path.
+        await expect(page.locator('#node-config-protobuf-validate')).toBeVisible();
+        await page.locator('#node-config-protobuf-validate').click();
+        await expect(page.locator('#node-config-protobuf-validate-result')).toContainText('TestType');
+
+        // A bad path surfaces the load error instead of a type list.
+        await page.locator('#node-config-input-protopath').fill('/no/such/schema.proto');
+        await page.locator('#node-config-protobuf-validate').click();
+        await expect(page.locator('#node-config-protobuf-validate-result')).toContainText('could not be loaded');
+
         await page.locator('#node-config-dialog-cancel').click();
         await closeNodeDialog(page);
 
@@ -459,6 +470,7 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
         expect(protofileHelp).toContain('/flows/protos/messages.proto,/flows/protos/common.proto');
         expect(protofileHelp).toContain('All listed files are watched');
         expect(protofileHelp).toContain('keepCase');
+        expect(protofileHelp).toContain('Validate');
         expect(protofileHelp).toContain('device_id');
         expect(protofileHelp).toContain('deviceId');
     }

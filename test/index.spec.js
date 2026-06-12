@@ -11,6 +11,14 @@ describe('package entrypoint', function () {
         registerType: function (type) {
           registeredTypes.push(type);
         }
+      },
+      httpAdmin: {
+        post: function () {}
+      },
+      auth: {
+        needsPermission: function () {
+          return function (req, res, next) { next(); };
+        }
       }
     };
 

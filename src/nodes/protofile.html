@@ -12,6 +12,37 @@
                 return "protobuf file";
             }
             return primaryPath.split(/[\\/]/).pop() || primaryPath;
+        },
+        oneditprepare: function() {
+            var resultRow = $("#node-config-protobuf-validate-result");
+            $("#node-config-protobuf-validate").on("click", function() {
+                var protopath = $("#node-config-input-protopath").val();
+                if (!protopath) {
+                    resultRow.show().css("color", "").text("Enter a proto path first.");
+                    return;
+                }
+                resultRow.show().css("color", "").text("Loading…");
+                // Relative URL so a custom httpAdminRoot still resolves; jQuery
+                // carries the editor's auth header automatically.
+                $.ajax({
+                    method: "POST",
+                    url: "protobuf-file/types",
+                    contentType: "application/json",
+                    data: JSON.stringify({ protopath: protopath, keepCase: $("#node-config-input-keepCase").is(":checked") })
+                }).done(function(response) {
+                    if (response.ok) {
+                        var summary = response.types.length
+                            ? "Loaded " + response.types.length + " type(s): " + response.types.join(", ")
+                            : "Loaded successfully, but no message types were found.";
+                        resultRow.show().css("color", "var(--red-ui-text-color-success, #3a3)").text(summary);
+                    } else {
+                        resultRow.show().css("color", "var(--red-ui-text-color-error, #a33)").text(response.error);
+                    }
+                }).fail(function(jqXHR) {
+                    resultRow.show().css("color", "var(--red-ui-text-color-error, #a33)")
+                        .text("Could not reach the validation endpoint (" + jqXHR.status + ").");
+                });
+            });
         }
     });
 </script>
@@ -37,6 +68,12 @@
         <input type="checkbox" id="node-config-input-keepCase" style="display: inline-block; width: auto; vertical-align: top;">
         <span>Keep names like <code>device_id</code></span>
     </div>
+    <div class="form-row">
+        <button type="button" class="red-ui-button" id="node-config-protobuf-validate">
+            <i class="fa fa-check"></i> Validate &amp; list types
+        </button>
+    </div>
+    <div class="form-tips" id="node-config-protobuf-validate-result" style="display: none;"></div>
 </script>
 
 <script type="text/markdown" data-help-name="protobuf-file">
@@ -57,6 +94,10 @@ Example: `/flows/protos/messages.proto,/flows/protos/common.proto`.
 By default protobuf.js converts snake_case field names to camelCase. Enable `keepCase` to keep snake_case names in encoded and decoded objects.
 
 Example: `device_id` stays `device_id` instead of becoming `deviceId`.
+
+### Validate
+
+The **Validate & list types** button loads the configured path(s) on the server and shows the message type names it finds, or the load error. Use the listed names in the encode/decode **Type** field. It only loads the path you entered - it does not browse the server's filesystem.
 
 ### Example
 

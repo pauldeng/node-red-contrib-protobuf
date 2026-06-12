@@ -35,7 +35,9 @@ module.exports = [
         languageOptions: {
             globals: {
                 ...commonGlobals,
+                after: 'readonly',
                 afterEach: 'readonly',
+                before: 'readonly',
                 beforeEach: 'readonly',
                 describe: 'readonly',
                 it: 'readonly',

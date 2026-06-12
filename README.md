@@ -27,6 +27,8 @@ npm install node-red-contrib-protobuf
 
 *Note on the protofile node* The proto file node watches the specified file(s) for changes on the filesystem through nodejs fs API. If the file contents of a `.proto`-file change on disk, all configured files become reloaded. Every comma-separated path is watched; rapid consecutive changes (common with some editors and operating systems) are batched into a single reload.
 
+The protobuf-file config dialog has a **Validate & list types** button that loads the configured path(s) on the server and shows the message type names found (or the load error), so you can confirm the path and copy the exact type name into the encode/decode **Type** field. It only loads the path you entered - it never browses the server's filesystem.
+
 > [!WARNING]
 > **"false" vs "not set" in proto3:** plain proto3 scalar fields use *implicit presence*. A value equal to the field default (`false`, `0`, `""`) is **never transmitted**, and the wire bytes for "set to false" and "never set" are identical. After decoding, the field is simply missing:
 >
