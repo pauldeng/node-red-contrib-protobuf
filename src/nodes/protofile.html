@@ -3,7 +3,19 @@
         category: 'config',
         defaults: {
             name: { value: "" },
-            protopath: { value: "", required: true, label: "Proto path" },
+            sourceType: { value: "file" },
+            protopath: {
+                value: "",
+                label: "Proto path",
+                // Required only in file mode; inline definitions have no path.
+                validate: function(v) {
+                    var source = $("#node-config-input-sourceType").length
+                        ? $("#node-config-input-sourceType").val()
+                        : this.sourceType;
+                    return (source === "inline") || /\S/.test(v || "");
+                }
+            },
+            protocontent: { value: "" },
             watchFile: { value: true },
             keepCase: { value: false }
         },
@@ -18,12 +30,98 @@
             return primaryPath.split(/[\\/]/).pop() || primaryPath;
         },
         oneditprepare: function() {
+            var that = this;
+
+            // Grow the inline editor to fill the tray, reserving the height of
+            // the rows below it (Keep case + Validate) so those stay pinned at
+            // the bottom and always visible.
+            that.resizeProtoEditor = function() {
+                var editorEl = $("#node-config-input-protocontent-editor");
+                if (!editorEl.length || !that.editor) {
+                    return;
+                }
+                var height = 250;
+                var trayBody = editorEl.closest(".red-ui-tray-body");
+                if (trayBody.length) {
+                    var belowHeight = 0;
+                    $("#protobuf-inline-row").nextAll(":visible").each(function() {
+                        belowHeight += $(this).outerHeight(true);
+                    });
+                    height = trayBody[0].getBoundingClientRect().bottom
+                        - editorEl[0].getBoundingClientRect().top - belowHeight - 20;
+                }
+                if (!(height > 120)) {
+                    height = 120;
+                }
+                editorEl.css("height", height + "px");
+                that.editor.resize();
+            };
+
+            var PROTO_TEMPLATE = [
+                'edition = "2024";',
+                '',
+                'message MyMessage {',
+                '    string name = 1;',
+                '    int32 value = 2;',
+                '}'
+            ].join("\n");
+
+            // Monaco editor for the inline definition. 'ace/mode/protobuf'
+            // maps to Monaco's bundled proto language for syntax highlighting.
+            this.editor = RED.editor.createEditor({
+                id: 'node-config-input-protocontent-editor',
+                mode: 'ace/mode/protobuf',
+                value: $("#node-config-input-protocontent").val(),
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false
+            });
+            // Save/Open buttons next to the editor, backed by the Node-RED
+            // library 'protobuf' collection with the .proto extension.
+            RED.library.create({
+                url: "protobuf",
+                type: "proto",
+                // Config-node fields use the node-config-input- prefix, so the
+                // library button attaches to the right Name field and reads it.
+                elementPrefix: "node-config-input-",
+                editor: this.editor,
+                mode: "ace/mode/protobuf",
+                ext: "proto",
+                fields: ['name']
+            });
+
+            function updateSourceVisibility() {
+                var inline = $("#node-config-input-sourceType").val() === "inline";
+                $("#protobuf-inline-row").toggle(inline);
+                $("#protobuf-file-row").toggle(!inline);
+                if (inline && that.editor && that.editor.getValue().trim() === "") {
+                    that.editor.setValue(PROTO_TEMPLATE, -1);
+                }
+                that.resizeProtoEditor();
+                // Re-measure once Monaco has laid out the now-visible editor.
+                if (inline) {
+                    setTimeout(that.resizeProtoEditor, 0);
+                }
+            }
+            $("#node-config-input-sourceType").val(this.sourceType === "inline" ? "inline" : "file");
+            $("#node-config-input-sourceType").on("change", updateSourceVisibility);
+            updateSourceVisibility();
+
             var resultRow = $("#node-config-protobuf-validate-result");
             $("#node-config-protobuf-validate").on("click", function() {
-                var protopath = $("#node-config-input-protopath").val();
-                if (!protopath) {
-                    resultRow.show().css("color", "").text("Enter a proto path first.");
-                    return;
+                var sourceType = $("#node-config-input-sourceType").val();
+                var payload = { sourceType: sourceType, keepCase: $("#node-config-input-keepCase").is(":checked") };
+                if (sourceType === "inline") {
+                    payload.protocontent = that.editor ? that.editor.getValue() : "";
+                    if (!payload.protocontent.trim()) {
+                        resultRow.show().css("color", "").text("Enter an inline definition first.");
+                        return;
+                    }
+                } else {
+                    payload.protopath = $("#node-config-input-protopath").val();
+                    if (!payload.protopath) {
+                        resultRow.show().css("color", "").text("Enter a proto path first.");
+                        return;
+                    }
                 }
                 resultRow.show().css("color", "").text("Loading…");
                 // Relative URL so a custom httpAdminRoot still resolves; jQuery
@@ -32,7 +130,7 @@
                     method: "POST",
                     url: "protobuf-file/types",
                     contentType: "application/json",
-                    data: JSON.stringify({ protopath: protopath, keepCase: $("#node-config-input-keepCase").is(":checked") })
+                    data: JSON.stringify(payload)
                 }).done(function(response) {
                     if (response.ok) {
                         var summary = response.types.length
@@ -47,6 +145,24 @@
                         .text("Could not reach the validation endpoint (" + jqXHR.status + ").");
                 });
             });
+        },
+        oneditsave: function() {
+            if (this.editor) {
+                $("#node-config-input-protocontent").val(this.editor.getValue());
+                this.editor.destroy();
+                this.editor = null;
+            }
+        },
+        oneditcancel: function() {
+            if (this.editor) {
+                this.editor.destroy();
+                this.editor = null;
+            }
+        },
+        oneditresize: function() {
+            if (this.resizeProtoEditor) {
+                this.resizeProtoEditor();
+            }
         }
     });
 </script>
@@ -57,31 +173,49 @@
         <input type="text" id="node-config-input-name" placeholder="Optional display name">
     </div>
     <div class="form-row">
-        <label for="node-config-input-protopath"><i class="fa fa-file-code-o"></i> Proto path</label>
-        <input type="text" id="node-config-input-protopath" placeholder="/path/to/schema.proto">
+        <label for="node-config-input-sourceType"><i class="fa fa-cog"></i> Source</label>
+        <select id="node-config-input-sourceType" style="width: auto;">
+            <option value="file">File path</option>
+            <option value="inline">Inline definition</option>
+        </select>
     </div>
-    <div class="form-tips" id="node-config-protopath-tip">
-        Use commas to load multiple .proto files.
+    <div id="protobuf-file-row">
+        <div class="form-row">
+            <label for="node-config-input-protopath"><i class="fa fa-file-code-o"></i> Proto path</label>
+            <input type="text" id="node-config-input-protopath" placeholder="/path/to/schema.proto">
+        </div>
+        <div class="form-tips" id="node-config-protopath-tip">
+            Use commas to load multiple .proto files.
+        </div>
+        <div class="form-row">
+            <label for="node-config-input-watchFile"><i class="fa fa-refresh"></i> Watch file</label>
+            <input type="checkbox" id="node-config-input-watchFile" style="display: inline-block; width: auto; vertical-align: top;">
+            <span>Reload when a listed proto file changes</span>
+        </div>
+        <div class="form-tips" id="node-config-watch-tip">
+            All listed files are watched. Rapid changes trigger a single reload.
+        </div>
     </div>
-    <div class="form-row">
-        <label for="node-config-input-watchFile"><i class="fa fa-refresh"></i> Watch file</label>
-        <input type="checkbox" id="node-config-input-watchFile" style="display: inline-block; width: auto; vertical-align: top;">
-        <span>Reload when a listed proto file changes</span>
-    </div>
-    <div class="form-tips" id="node-config-watch-tip">
-        All listed files are watched. Rapid changes trigger a single reload.
+    <div id="protobuf-inline-row">
+        <div class="form-row" style="margin-bottom: 0px;">
+            <label for="node-config-input-protocontent"><i class="fa fa-file-code-o"></i> Definition</label>
+            <input type="hidden" id="node-config-input-protocontent">
+        </div>
+        <div class="form-row node-text-editor-row">
+            <div style="height: 200px;" class="node-text-editor" id="node-config-input-protocontent-editor"></div>
+        </div>
     </div>
     <div class="form-row">
         <label for="node-config-input-keepCase"><i class="fa fa-code"></i> Keep case</label>
         <input type="checkbox" id="node-config-input-keepCase" style="display: inline-block; width: auto; vertical-align: top;">
         <span>Keep names like <code>device_id</code></span>
     </div>
-    <div class="form-row">
-        <button type="button" class="red-ui-button" id="node-config-protobuf-validate">
-            <i class="fa fa-check"></i> Validate &amp; list types
+    <div class="form-row" style="display: flex; align-items: center; gap: 8px;">
+        <button type="button" class="red-ui-button" id="node-config-protobuf-validate" style="flex: 0 0 auto;">
+            <i class="fa fa-check"></i> Validate
         </button>
+        <span id="node-config-protobuf-validate-result" style="display: none; flex: 1 1 auto;"></span>
     </div>
-    <div class="form-tips" id="node-config-protobuf-validate-result" style="display: none;"></div>
 </script>
 
 <script type="text/markdown" data-help-name="protobuf-file">
@@ -90,6 +224,7 @@ Loads one or more protobuf schema files for encode and decode nodes.
 ### Configuration
 
 : Name (string) : Optional display name shown in the configuration nodes panel and in the encode/decode proto file dropdown. Defaults to the file name when blank.
+: Source (select) : Where the schema comes from - a file path (default) or an inline definition typed into the editor.
 : Proto path (string) : Path to a `.proto` file. Use commas to load multiple files.
 : Watch file (boolean) : Reloads the protobuf root when any configured file changes.
 : Keep case (boolean) : Passes `keepCase` to protobuf.js so snake_case field names stay unchanged.
@@ -104,9 +239,13 @@ By default protobuf.js converts snake_case field names to camelCase. Enable `kee
 
 Example: `device_id` stays `device_id` instead of becoming `deviceId`.
 
+### Source: file path vs inline
+
+In **File path** mode the node loads the `.proto` file(s) from disk and can watch them for changes. In **Inline definition** mode you type or paste the schema directly into the editor; the **Save**/**Open** buttons store and load it through the Node-RED library (default `.proto` extension). Inline definitions must be self-contained - protobuf.js cannot resolve `import` statements from inline text, so use file path mode for multi-file or chained schemas.
+
 ### Validate
 
-The **Validate & list types** button loads the configured path(s) on the server and shows the message type names it finds, or the load error. Use the listed names in the encode/decode **Type** field. It only loads the path you entered - it does not browse the server's filesystem.
+The **Validate** button loads the configured path(s) or inline definition on the server and shows the message type names it finds, or the load error, beside the button. Use the listed names in the encode/decode **Type** field. It only loads the schema you entered - it does not browse the server's filesystem.
 
 ### Example
 

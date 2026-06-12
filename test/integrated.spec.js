@@ -206,4 +206,28 @@ describe('protobuf integration test', function () {
         });
     });
 
+    it('should encode and decode using an inline protobuf definition', function (done) {
+        var flow = [
+            { id: 'encode-node', type: 'encode', z: 'e4c459b3.cc22e8', protofile: 'c55e9eb5.3175', protoType: 'InlineType', wires: [['decode-node']] },
+            { id: 'decode-node', type: 'decode', z: 'e4c459b3.cc22e8', protofile: 'c55e9eb5.3175', protoType: 'InlineType', wires: [['helper-node']] },
+            { id: 'helper-node', type: 'helper', z: 'e4c459b3.cc22e8', wires: [[]] },
+            { id: 'c55e9eb5.3175', type: 'protobuf-file', z: '', sourceType: 'inline', protocontent: 'syntax = "proto3"; message InlineType { string label = 1; int32 count = 2; }' }
+        ];
+        helper.load([encode, decode, protofile], flow, function () {
+            let testMessage = { label: 'inline round trip', count: 3 };
+            var encodeNode = helper.getNode('encode-node');
+            var helperNode = helper.getNode('helper-node');
+            helperNode.on('input', function (msg) {
+                try {
+                    assert.deepStrictEqual(msg.payload, testMessage);
+                    done();
+                }
+                catch (error) {
+                    done(error);
+                }
+            });
+            encodeNode.receive({ payload: testMessage });
+        });
+    });
+
 });

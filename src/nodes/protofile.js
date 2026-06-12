@@ -11,10 +11,28 @@ function splitProtopath (protopath) {
     return protopath.includes(',') ? protopath.split(',').map((part) => part.trim()) : protopath;
 }
 
-// Load one or more proto files into a protobuf.js Root. Shared by the
-// runtime node and the validate endpoint so they never load differently.
+// Load one or more proto files into a protobuf.js Root.
 function loadProtoRoot (protopath, keepCase) {
     return new Root().loadSync(splitProtopath(protopath), { keepCase: keepCase === true });
+}
+
+// Parse an inline protobuf definition string into a Root. Inline schemas
+// are self-contained: protobuf.js cannot resolve `import` from text.
+function parseProtoContent (content, keepCase) {
+    const source = (content || '').trim();
+    if (!source) {
+        throw new Error('No inline protobuf definition.');
+    }
+    return protobufjs.parse(source, { keepCase: keepCase === true }).root;
+}
+
+// Load the proto types from either a file path or inline content. Shared by
+// the runtime node and the validate endpoint so they never load differently.
+function loadProtoTypes (opts) {
+    if (opts.sourceType === 'inline') {
+        return parseProtoContent(opts.protocontent, opts.keepCase);
+    }
+    return loadProtoRoot(opts.protopath, opts.keepCase);
 }
 
 // Collect the fully-qualified names of every message type in a root,
@@ -35,17 +53,29 @@ function collectTypeNames (root) {
 }
 
 module.exports = function (RED) {
-    // Validate a proto path and return its message type names. Gated at
+    // Library collection that stores inline .proto definitions saved from
+    // the editor (Save/Open buttons next to the inline editor).
+    RED.library.register('protobuf');
+
+    // Validate a proto source and return its message type names. Gated at
     // flows.write so it grants no capability a deploy-capable user lacks,
-    // and it only loads the supplied path - it never lists directories.
+    // and it only loads the supplied path or inline content - it never
+    // lists directories.
     RED.httpAdmin.post('/protobuf-file/types', RED.auth.needsPermission('flows.write'), function (req, res) {
-        const protopath = ((req.body && req.body.protopath) || '').trim();
-        if (!protopath) {
+        const body = req.body || {};
+        const sourceType = body.sourceType || 'file';
+        if (sourceType !== 'inline' && !((body.protopath || '').trim())) {
             res.json({ ok: false, error: 'No proto path supplied.' });
             return;
         }
         try {
-            res.json({ ok: true, types: collectTypeNames(loadProtoRoot(protopath, req.body.keepCase)) });
+            const root = loadProtoTypes({
+                sourceType: sourceType,
+                protopath: (body.protopath || '').trim(),
+                protocontent: body.protocontent,
+                keepCase: body.keepCase
+            });
+            res.json({ ok: true, types: collectTypeNames(root) });
         }
         catch (error) {
             res.json({ ok: false, error: ('Proto file could not be loaded. ' + (error.message || error)).slice(0, 500) });
@@ -54,6 +84,8 @@ module.exports = function (RED) {
 
     function ProtoFileNode (config) {
         RED.nodes.createNode(this, config);
+        this.sourceType = config.sourceType || 'file';
+        this.protocontent = config.protocontent || '';
         this.protopath = splitProtopath(config.protopath || '');
         this.watchFile = config.watchFile !== false;
         this.keepCase = config.keepCase;
@@ -61,7 +93,7 @@ module.exports = function (RED) {
 
         protoFileNode.load = function () {
             try {
-                protoFileNode.protoTypes = loadProtoRoot(protoFileNode.protopath, protoFileNode.keepCase);
+                protoFileNode.protoTypes = loadProtoTypes(protoFileNode);
             }
             catch (error) {
                 protoFileNode.error('Proto file could not be loaded. ' + error);
@@ -99,7 +131,10 @@ module.exports = function (RED) {
             });
         };
         protoFileNode.load();
-        if (protoFileNode.protoTypes !== undefined && protoFileNode.watchFile) protoFileNode.watchProtopath();
+        // Inline definitions have no file to watch.
+        if (protoFileNode.protoTypes !== undefined && protoFileNode.sourceType !== 'inline' && protoFileNode.watchFile) {
+            protoFileNode.watchProtopath();
+        }
     }
     RED.nodes.registerType('protobuf-file', ProtoFileNode);
 };

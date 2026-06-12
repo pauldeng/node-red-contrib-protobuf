@@ -351,10 +351,13 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
                 },
                 protofile: {
                     hasPrototypesDefault: Object.prototype.hasOwnProperty.call(protofile.defaults, 'prototypes'),
-                    protopathRequired: protofile.defaults.protopath.required,
+                    protopathRequiredInFileMode: protofile.defaults.protopath.validate.call({ sourceType: 'file' }, ''),
+                    protopathOptionalInInlineMode: protofile.defaults.protopath.validate.call({ sourceType: 'inline' }, ''),
                     hasNameDefault: Object.prototype.hasOwnProperty.call(protofile.defaults, 'name'),
                     labelWithName: protofile.label.call({ name: 'Custom schema name', protopath: '/srv/protos/thing.proto' }),
                     labelWithoutName: protofile.label.call({ name: '', protopath: '/srv/protos/thing.proto' }),
+                    sourceTypeDefault: protofile.defaults.sourceType && protofile.defaults.sourceType.value,
+                    hasProtocontentDefault: Object.prototype.hasOwnProperty.call(protofile.defaults, 'protocontent'),
                 },
             };
         });
@@ -370,10 +373,13 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
         expect(definitions.decode.inputLabel).toBe('protobuf buffer');
         expect(definitions.decode.outputLabel).toBe('object');
         expect(definitions.protofile.hasPrototypesDefault).toBe(false);
-        expect(definitions.protofile.protopathRequired).toBe(true);
+        expect(definitions.protofile.protopathRequiredInFileMode).toBe(false);
+        expect(definitions.protofile.protopathOptionalInInlineMode).toBe(true);
         expect(definitions.protofile.hasNameDefault).toBe(true);
         expect(definitions.protofile.labelWithName).toBe('Custom schema name');
         expect(definitions.protofile.labelWithoutName).toBe('thing.proto');
+        expect(definitions.protofile.sourceTypeDefault).toBe('file');
+        expect(definitions.protofile.hasProtocontentDefault).toBe(true);
         expect(definitions.encode.delimitedDefault).toBe(false);
         expect(definitions.decode.delimitedDefault).toBe(false);
         expect(definitions.decode.delimitedOutputDefault).toBe('messages');
@@ -405,7 +411,23 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
         await page.locator('#node-input-btn-protofile-edit').click();
         await expect(page.locator('#node-config-input-name')).toBeVisible();
         await expect(page.locator('label[for="node-config-input-name"]')).toContainText('Name');
+
+        // Source defaults to file mode: path row visible, inline editor hidden.
+        await expect(page.locator('#node-config-input-sourceType')).toBeVisible();
         await expect(page.locator('#node-config-input-protopath')).toBeVisible();
+        await expect(page.locator('#protobuf-inline-row')).toBeHidden();
+
+        // Switching to inline reveals the Monaco editor and library buttons, hides the path row.
+        await page.locator('#node-config-input-sourceType').selectOption('inline');
+        await expect(page.locator('#node-config-input-protocontent-editor')).toBeVisible();
+        await expect(page.locator('#protobuf-file-row')).toBeHidden();
+        await expect(page.locator('#node-config-input-protocontent-editor .monaco-editor')).toBeVisible();
+        // The library Save/Open button is injected next to the Name field.
+        await expect(page.locator('#node-input-proto-lookup')).toBeVisible();
+        await page.locator('#node-config-input-sourceType').selectOption('file');
+        await expect(page.locator('#node-config-input-protopath')).toBeVisible();
+        await expect(page.locator('#protobuf-inline-row')).toBeHidden();
+
         await expect(page.locator('label[for="node-config-input-protopath"]')).toContainText('Proto path');
         await expect(page.locator('label[for="node-config-input-watchFile"]')).toContainText('Watch file');
         await expect(page.locator('label[for="node-config-input-keepCase"]')).toContainText('Keep case');

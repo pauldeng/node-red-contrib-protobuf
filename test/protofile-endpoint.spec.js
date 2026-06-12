@@ -107,6 +107,38 @@ describe('protobuf-file types admin endpoint', function () {
             });
     });
 
+    it('should list types from inline protobuf content', function (done) {
+        postTypes({ sourceType: 'inline', protocontent: 'syntax = "proto3"; message Bar { bool b = 1; }' })
+            .expect(200)
+            .end(function (error, res) {
+                if (error) return done(error);
+                try {
+                    assert.strictEqual(res.body.ok, true);
+                    assert.ok(res.body.types.includes('Bar'));
+                    done();
+                }
+                catch (assertion) {
+                    done(assertion);
+                }
+            });
+    });
+
+    it('should report an error for empty inline content', function (done) {
+        postTypes({ sourceType: 'inline', protocontent: '' })
+            .expect(200)
+            .end(function (error, res) {
+                if (error) return done(error);
+                try {
+                    assert.strictEqual(res.body.ok, false);
+                    assert.strictEqual(typeof res.body.error, 'string');
+                    done();
+                }
+                catch (assertion) {
+                    done(assertion);
+                }
+            });
+    });
+
     it('should reject an empty proto path', function (done) {
         postTypes({ protopath: '' })
             .expect(200)

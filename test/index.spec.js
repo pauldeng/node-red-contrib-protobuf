@@ -19,6 +19,9 @@ describe('package entrypoint', function () {
         needsPermission: function () {
           return function (req, res, next) { next(); };
         }
+      },
+      library: {
+        register: function () {}
       }
     };
 

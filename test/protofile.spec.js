@@ -28,6 +28,67 @@ describe('protobuf protofile node', function () {
     });
   });
 
+  it('should load message types from an inline protobuf definition', function (done) {
+    var flow = [{
+      id: 'n1',
+      type: 'protobuf-file',
+      name: 'inline schema',
+      sourceType: 'inline',
+      protocontent: 'syntax = "proto3"; message Foo { string a = 1; int32 b = 2; }'
+    }];
+    helper.load(protofile, flow, function () {
+      var n1 = helper.getNode('n1');
+      try {
+        assert.strictEqual(n1.sourceType, 'inline');
+        assert.strictEqual(typeof n1.protoTypes.Foo, 'object');
+        assert.strictEqual(n1.protoFileWatchers, undefined, 'inline mode must not watch any file');
+        done();
+      }
+      catch (error) {
+        done(error);
+      }
+    });
+  });
+
+  it('should keep snake_case field names for inline definitions when keepCase is true', function (done) {
+    var flow = [{
+      id: 'n1',
+      type: 'protobuf-file',
+      sourceType: 'inline',
+      keepCase: true,
+      protocontent: 'syntax = "proto3"; message M { int32 my_field = 1; }'
+    }];
+    helper.load(protofile, flow, function () {
+      var n1 = helper.getNode('n1');
+      try {
+        assert.ok(Object.prototype.hasOwnProperty.call(n1.protoTypes.lookupType('M').fields, 'my_field'));
+        done();
+      }
+      catch (error) {
+        done(error);
+      }
+    });
+  });
+
+  it('should report an error for invalid inline content without crashing', function (done) {
+    var flow = [{
+      id: 'n1',
+      type: 'protobuf-file',
+      sourceType: 'inline',
+      protocontent: 'this is not a valid proto file'
+    }];
+    helper.load(protofile, flow, function () {
+      var n1 = helper.getNode('n1');
+      try {
+        assert.strictEqual(n1.protoTypes, undefined);
+        done();
+      }
+      catch (error) {
+        done(error);
+      }
+    });
+  });
+
   it('should reload on file change', function (done) {
     fs.copyFileSync('test/assets/test.proto', '/tmp/test.proto');
     var flow = [{ id: 'n1', type: 'protobuf-file', name: 'test name', protopath: '/tmp/test.proto' }];

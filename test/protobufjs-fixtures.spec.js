@@ -96,6 +96,9 @@ const createProtoFileNode = function (config) {
         return function (req, res, next) { next(); };
       },
     },
+    library: {
+      register: function () {},
+    },
   };
 
   protofile(RED);
