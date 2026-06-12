@@ -54,70 +54,66 @@
     </div>
 </script>
 
-<script type="text/html" data-help-name="encode">
-    <p>Encodes a JavaScript object into a protobuf binary buffer.</p>
-    <h3>Inputs</h3>
-    <dl class="message-properties">
-        <dt>payload
-            <span class="property-type">object</span>
-        </dt>
-        <dd>
-            JavaScript object containing fields for the selected protobuf message type.
-        </dd>
-        <dt>protobufType
-            <span class="property-type">string</span>
-        </dt>
-        <dd>
-            Optional protobuf message type name. This value overrides the configured message type.
-        </dd>
-    </dl>
-    <h3>Outputs</h3>
-    <dl class="message-properties">
-        <dt>payload
-            <span class="property-type">buffer</span>
-        </dt>
-        <dd>
-            Protobuf-encoded binary message.
-        </dd>
-        <dt>protobufType
-            <span class="property-type">string</span>
-        </dt>
-        <dd>
-            Message type used for encoding.
-        </dd>
-    </dl>
-    <h3>Configuration</h3>
-    <dl class="message-properties">
-        <dt>Proto file <span class="property-type">config</span></dt>
-        <dd>Required protobuf-file configuration node.</dd>
-        <dt>Type <span class="property-type">string</span></dt>
-        <dd>Optional when <code>msg.protobufType</code> is set.</dd>
-        <dt>Delimited <span class="property-type">boolean</span></dt>
-        <dd>Prefixes each message with its byte length (protobuf.js <code>encodeDelimited</code>). Off by default.</dd>
-    </dl>
-    <h3>Details</h3>
-    <p>The node verifies <code>msg.payload</code> against the selected protobuf message type and encodes it with protobuf.js.</p>
-    <p>msg.protobufType overrides the configured message type.</p>
-    <p>If the payload does not match the selected type, the node reports a warning and does not send a message.</p>
-    <p>With <b>Delimited</b> enabled, the payload may be a single object or an array of objects. Each object becomes one length-prefixed message and the output buffer contains them back to back - the framing used for streams and files of concatenated messages.</p>
-    <h3>Example</h3>
-    <p>With message type <code>TestType</code> selected, this <code>msg.payload</code>:</p>
-    <pre>{
+<script type="text/markdown" data-help-name="encode">
+Encodes a JavaScript object into a protobuf binary buffer.
+
+### Inputs
+
+: payload (object | array) : JavaScript object containing fields for the selected protobuf message type. With **Delimited** enabled, an array of objects is also accepted.
+: protobufType (string) : Optional protobuf message type name. This value overrides the configured message type.
+
+### Outputs
+
+: payload (buffer) : Protobuf-encoded binary message.
+: protobufType (string) : Message type used for encoding.
+
+### Configuration
+
+: Proto file (config) : Required protobuf-file configuration node.
+: Type (string) : Optional when `msg.protobufType` is set.
+: Delimited (boolean) : Prefixes each message with its byte length (protobuf.js `encodeDelimited`). Off by default.
+
+### Details
+
+The node verifies `msg.payload` against the selected protobuf message type and encodes it with protobuf.js.
+
+msg.protobufType overrides the configured message type.
+
+If the payload does not match the selected type, the node reports a warning and does not send a message.
+
+With **Delimited** enabled, the payload may be a single object or an array of objects. Each object becomes one length-prefixed message and the output buffer contains them back to back - the framing used for streams and files of concatenated messages.
+
+> [!WARNING]
+> **false vs not set (proto3):** for plain proto3 scalar fields, sending the default value (`false`, `0`, `""`) produces the same bytes as not sending the field at all - the receiver cannot tell the difference, and the field will be missing after decode. Declare the field `optional` in proto3, or use a proto2 or Editions schema, when this distinction matters.
+
+### Example
+
+With message type `TestType` selected, this `msg.payload`:
+
+```json
+{
     "timestamp": 1533295590569,
     "foo": 1.5,
     "bar": true,
     "test": "hello"
-}</pre>
-    <p>becomes a binary wire-format buffer such as <code>&lt;Buffer 09 00 90 ca 9f f8 4f 76 42 ...&gt;</code>.</p>
-    <p>With <b>Delimited</b> enabled, an array becomes one buffer holding each message with its byte-length prefix:</p>
-    <pre>[
+}
+```
+
+becomes a binary wire-format buffer such as `<Buffer 09 00 90 ca 9f f8 4f 76 42 ...>`.
+
+With **Delimited** enabled, an array becomes one buffer holding each message with its byte-length prefix:
+
+```json
+[
     { "test": "first" },
     { "test": "second" }
-]</pre>
-    <h3>References</h3>
-    <ul>
-        <li><a href="https://protobufjs.github.io/protobuf.js/Type.html" target="_blank">protobuf.js Type API</a> - the <code>verify</code>, <code>encode</code>, and <code>encodeDelimited</code> methods this node uses</li>
-        <li><a href="https://protobuf.dev/programming-guides/encoding/" target="_blank">Protobuf encoding (wire format)</a> - how messages are represented as bytes</li>
-        <li><a href="https://protobuf.dev/programming-guides/techniques/#streaming" target="_blank">Streaming multiple messages</a> - why length-delimited framing exists</li>
-    </ul>
+]
+```
+
+### References
+
+- [protobuf.js Type API](https://protobufjs.github.io/protobuf.js/Type.html) - the `verify`, `encode`, and `encodeDelimited` methods this node uses
+- [Protobuf encoding (wire format)](https://protobuf.dev/programming-guides/encoding/) - how messages are represented as bytes
+- [Streaming multiple messages](https://protobuf.dev/programming-guides/techniques/#streaming) - why length-delimited framing exists
+- [Field presence](https://protobuf.dev/programming-guides/field_presence/) - why proto3 default values disappear and how `optional` fixes it
 </script>

@@ -59,72 +59,79 @@
     </div>
 </script>
 
-<script type="text/html" data-help-name="decode">
-    <p>Decodes a protobuf binary buffer into a JavaScript object.</p>
-    <h3>Inputs</h3>
-    <dl class="message-properties">
-        <dt>payload
-            <span class="property-type">buffer</span>
-        </dt>
-        <dd>
-            Protobuf-encoded binary message.
-        </dd>
-        <dt>protobufType
-            <span class="property-type">string</span>
-        </dt>
-        <dd>
-            Optional protobuf message type name. This value overrides the configured message type.
-        </dd>
-    </dl>
-    <h3>Outputs</h3>
-    <dl class="message-properties">
-        <dt>payload
-            <span class="property-type">object</span>
-        </dt>
-        <dd>
-            JavaScript object containing decoded protobuf fields.
-        </dd>
-        <dt>protobufType
-            <span class="property-type">string</span>
-        </dt>
-        <dd>
-            Message type used for decoding.
-        </dd>
-    </dl>
-    <h3>Configuration</h3>
-    <dl class="message-properties">
-        <dt>Proto file <span class="property-type">config</span></dt>
-        <dd>Required protobuf-file configuration node.</dd>
-        <dt>Type <span class="property-type">string</span></dt>
-        <dd>Optional when <code>msg.protobufType</code> is set.</dd>
-        <dt>Delimited <span class="property-type">boolean</span></dt>
-        <dd>Reads length-prefixed messages (protobuf.js <code>decodeDelimited</code>). Off by default.</dd>
-        <dt>Output <span class="property-type">select</span></dt>
-        <dd>How decoded delimited messages are sent: one message per decoded item, or a single message with an array payload.</dd>
-    </dl>
-    <h3>Details</h3>
-    <p>The node decodes <code>msg.payload</code> with protobuf.js and converts longs, enums, and bytes to strings.</p>
-    <p>msg.protobufType overrides the configured message type.</p>
-    <p>If a proto2 message is incomplete but protobuf.js can recover fields, the node sends a partial decoded message.</p>
-    <p>If the buffer cannot be decoded, the node reports an error and does not send a message.</p>
-    <p>With <b>Delimited</b> enabled, the buffer may contain several length-prefixed messages back to back. By default the node sends one message per decoded item, so each payload looks the same as in non-delimited mode. Choose the array output to receive a single message whose payload is an array of all decoded objects. If any frame is corrupted, the node reports an error and sends nothing.</p>
-    <h3>Example</h3>
-    <p>With message type <code>TestType</code> selected, a wire-format buffer decodes back into:</p>
-    <pre>{
+<script type="text/markdown" data-help-name="decode">
+Decodes a protobuf binary buffer into a JavaScript object.
+
+### Inputs
+
+: payload (buffer) : Protobuf-encoded binary message.
+: protobufType (string) : Optional protobuf message type name. This value overrides the configured message type.
+
+### Outputs
+
+: payload (object | array) : JavaScript object containing decoded protobuf fields. With **Delimited** enabled and the array output selected, an array of objects.
+: protobufType (string) : Message type used for decoding.
+
+### Configuration
+
+: Proto file (config) : Required protobuf-file configuration node.
+: Type (string) : Optional when `msg.protobufType` is set.
+: Delimited (boolean) : Reads length-prefixed messages (protobuf.js `decodeDelimited`). Off by default.
+: Output (select) : How decoded delimited messages are sent: one message per decoded item, or a single message with an array payload.
+
+### Details
+
+The node decodes `msg.payload` with protobuf.js and converts longs, enums, and bytes to strings.
+
+msg.protobufType overrides the configured message type.
+
+If a proto2 message is incomplete but protobuf.js can recover fields, the node sends a partial decoded message.
+
+If the buffer cannot be decoded, the node reports an error and does not send a message.
+
+With **Delimited** enabled, the buffer may contain several length-prefixed messages back to back. By default the node sends one message per decoded item, so each payload looks the same as in non-delimited mode. Choose the array output to receive a single message whose payload is an array of all decoded objects. If any frame is corrupted, the node reports an error and sends nothing.
+
+> [!WARNING]
+> **false vs not set (proto3):** plain proto3 scalar fields have *implicit presence*. A value equal to the field default (`false`, `0`, `""`) is never transmitted, so it is **missing from the decoded object**. The wire bytes for "set to false" and "never set" are identical - no decoder can tell them apart.
+>
+> ```
+> // schema: bool enabled = 1;
+> { "enabled": false } -> encode -> decode -> { }   // enabled is gone!
+> ```
+>
+> When your flow must distinguish `false` from "not set", declare the field `optional` in proto3, or use a proto2 or Editions schema - those track presence, so the value survives:
+>
+> ```
+> // schema: optional bool enabled = 1;
+> { "enabled": false } -> encode -> decode -> { "enabled": false }
+> ```
+
+### Example
+
+With message type `TestType` selected, a wire-format buffer decodes back into:
+
+```json
+{
     "timestamp": 1533295590569,
     "foo": 1.5,
     "bar": true,
     "test": "hello"
-}</pre>
-    <p>With <b>Delimited</b> enabled and a buffer holding two framed messages, the default output sends two messages; the array output sends one message with:</p>
-    <pre>[
+}
+```
+
+With **Delimited** enabled and a buffer holding two framed messages, the default output sends two messages; the array output sends one message with:
+
+```json
+[
     { "test": "first" },
     { "test": "second" }
-]</pre>
-    <h3>References</h3>
-    <ul>
-        <li><a href="https://protobufjs.github.io/protobuf.js/Type.html" target="_blank">protobuf.js Type API</a> - the <code>decode</code>, <code>decodeDelimited</code>, and <code>toObject</code> methods this node uses</li>
-        <li><a href="https://protobuf.dev/programming-guides/encoding/" target="_blank">Protobuf encoding (wire format)</a> - how messages are represented as bytes</li>
-        <li><a href="https://protobuf.dev/programming-guides/techniques/#streaming" target="_blank">Streaming multiple messages</a> - why length-delimited framing exists</li>
-    </ul>
+]
+```
+
+### References
+
+- [protobuf.js Type API](https://protobufjs.github.io/protobuf.js/Type.html) - the `decode`, `decodeDelimited`, and `toObject` methods this node uses
+- [Protobuf encoding (wire format)](https://protobuf.dev/programming-guides/encoding/) - how messages are represented as bytes
+- [Streaming multiple messages](https://protobuf.dev/programming-guides/techniques/#streaming) - why length-delimited framing exists
+- [Field presence](https://protobuf.dev/programming-guides/field_presence/) - why proto3 default values disappear and how `optional` fixes it
 </script>

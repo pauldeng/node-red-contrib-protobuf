@@ -1,6 +1,11 @@
 // proto3 example schema.
-// proto3 fields have implicit presence: an unset field encodes nothing
-// and decodes to its zero value (0, false, or "").
+//
+// WARNING - "false vs not set": plain proto3 scalar fields have implicit
+// presence. A value equal to the default (false, 0, "") is never
+// transmitted, so it is missing after decode, and "set to false" cannot
+// be told apart from "never set". Declare a field `optional` when that
+// distinction matters, e.g.:  optional bool enabled = 6;
+// See https://protobuf.dev/programming-guides/field_presence/
 syntax = "proto3";
 
 message TestType {

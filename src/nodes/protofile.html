@@ -39,36 +39,54 @@
     </div>
 </script>
 
-<script type="text/html" data-help-name="protobuf-file">
-    <p>Loads one or more protobuf schema files for encode and decode nodes.</p>
-    <h3>Configuration</h3>
-    <dl class="message-properties">
-        <dt>Proto path <span class="property-type">string</span></dt>
-        <dd>Path to a <code>.proto</code> file. Use commas to load multiple files.</dd>
-        <dt>Watch file <span class="property-type">boolean</span></dt>
-        <dd>Reloads the protobuf root when any configured file changes.</dd>
-        <dt>Keep case <span class="property-type">boolean</span></dt>
-        <dd>Passes <code>keepCase</code> to protobuf.js so snake_case field names stay unchanged.</dd>
-    </dl>
-    <h3>Details</h3>
-    <p>Use commas to load multiple <code>.proto</code> files. All listed files are watched; rapid changes trigger a single reload.</p>
-    <p>Example: <code>/flows/protos/messages.proto,/flows/protos/common.proto</code>.</p>
-    <p>By default protobuf.js converts snake_case field names to camelCase. Enable <code>keepCase</code> to keep snake_case names in encoded and decoded objects.</p>
-    <p>Example: <code>device_id</code> stays <code>device_id</code> instead of becoming <code>deviceId</code>.</p>
-    <h3>Example</h3>
-    <p>A minimal proto3 schema file:</p>
-    <pre>syntax = "proto3";
+<script type="text/markdown" data-help-name="protobuf-file">
+Loads one or more protobuf schema files for encode and decode nodes.
+
+### Configuration
+
+: Proto path (string) : Path to a `.proto` file. Use commas to load multiple files.
+: Watch file (boolean) : Reloads the protobuf root when any configured file changes.
+: Keep case (boolean) : Passes `keepCase` to protobuf.js so snake_case field names stay unchanged.
+
+### Details
+
+Use commas to load multiple `.proto` files. All listed files are watched; rapid changes trigger a single reload.
+
+Example: `/flows/protos/messages.proto,/flows/protos/common.proto`.
+
+By default protobuf.js converts snake_case field names to camelCase. Enable `keepCase` to keep snake_case names in encoded and decoded objects.
+
+Example: `device_id` stays `device_id` instead of becoming `deviceId`.
+
+### Example
+
+A minimal proto3 schema file:
+
+```proto
+syntax = "proto3";
 
 message SensorReading {
     string device_id = 1;
     double value = 2;
-}</pre>
-    <p>Load it here, then set the encode/decode <b>Type</b> field to <code>SensorReading</code>.</p>
-    <h3>References</h3>
-    <ul>
-        <li><a href="https://protobuf.dev/programming-guides/proto3/" target="_blank">proto3 language guide</a></li>
-        <li><a href="https://protobuf.dev/programming-guides/proto2/" target="_blank">proto2 language guide</a> - <code>required</code>, <code>optional</code>, and default values</li>
-        <li><a href="https://protobuf.dev/programming-guides/editions/" target="_blank">Protobuf Editions</a> - edition 2023 and 2024 schemas</li>
-        <li><a href="https://protobufjs.github.io/protobuf.js/Root.html" target="_blank">protobuf.js Root API</a> - file loading and the <code>keepCase</code> option</li>
-    </ul>
+}
+```
+
+Load it here, then set the encode/decode **Type** field to `SensorReading`.
+
+> [!TIP]
+> **Schema tip:** plain proto3 scalar fields cannot distinguish "set to `false`/`0`" from "not set" - such values disappear after decode. Declare fields `optional` in proto3 when that distinction matters; proto2 and Editions schemas track presence by default.
+>
+> ```proto
+> message SensorReading {
+>     optional bool active = 3;  // false survives encode/decode
+> }
+> ```
+
+### References
+
+- [proto3 language guide](https://protobuf.dev/programming-guides/proto3/)
+- [proto2 language guide](https://protobuf.dev/programming-guides/proto2/) - `required`, `optional`, and default values
+- [Protobuf Editions](https://protobuf.dev/programming-guides/editions/) - edition 2023 and 2024 schemas
+- [protobuf.js Root API](https://protobufjs.github.io/protobuf.js/Root.html) - file loading and the `keepCase` option
+- [Field presence](https://protobuf.dev/programming-guides/field_presence/) - implicit vs explicit presence and the `optional` keyword
 </script>

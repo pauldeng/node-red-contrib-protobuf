@@ -425,7 +425,7 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
 
         for (const nodeType of ['encode', 'decode', 'protobuf-file']) {
             expect(scriptTypes[nodeType].template).toBe('text/html');
-            expect(scriptTypes[nodeType].help).toBe('text/html');
+            expect(scriptTypes[nodeType].help).toBe('text/markdown');
         }
 
         const encodeHelp = await getNodeHelpText(page, 'encode');
@@ -437,14 +437,23 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
         expect(encodeHelp).toContain('Example');
         expect(encodeHelp).toContain('https://protobufjs.github.io/protobuf.js/Type.html');
         expect(encodeHelp).toContain('https://protobuf.dev/programming-guides/encoding/');
+        expect(encodeHelp).toContain('[!WARNING]');
+        expect(encodeHelp).toContain('false vs not set');
+        expect(encodeHelp).toContain('https://protobuf.dev/programming-guides/field_presence/');
         expect(decodeHelp).toContain('partial decoded message');
         expect(decodeHelp).toContain('one message per decoded item');
         expect(decodeHelp).toContain('Example');
         expect(decodeHelp).toContain('https://protobufjs.github.io/protobuf.js/Type.html');
         expect(decodeHelp).toContain('https://protobuf.dev/programming-guides/techniques/#streaming');
+        expect(decodeHelp).toContain('[!WARNING]');
+        expect(decodeHelp).toContain('false vs not set');
+        expect(decodeHelp).toContain('optional bool enabled = 1;');
+        expect(decodeHelp).toContain('https://protobuf.dev/programming-guides/field_presence/');
         expect(protofileHelp).toContain('syntax = "proto3"');
         expect(protofileHelp).toContain('https://protobuf.dev/programming-guides/editions/');
         expect(protofileHelp).toContain('https://protobufjs.github.io/protobuf.js/Root.html');
+        expect(protofileHelp).toContain('[!TIP]');
+        expect(protofileHelp).toContain('https://protobuf.dev/programming-guides/field_presence/');
         expect(protofileHelp).toContain('Use commas to load multiple');
         expect(protofileHelp).toContain('/flows/protos/messages.proto,/flows/protos/common.proto');
         expect(protofileHelp).toContain('All listed files are watched');

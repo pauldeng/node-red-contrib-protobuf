@@ -27,6 +27,21 @@ npm install node-red-contrib-protobuf
 
 *Note on the protofile node* The proto file node watches the specified file(s) for changes on the filesystem through nodejs fs API. If the file contents of a `.proto`-file change on disk, all configured files become reloaded. Every comma-separated path is watched; rapid consecutive changes (common with some editors and operating systems) are batched into a single reload.
 
+> [!WARNING]
+> **"false" vs "not set" in proto3:** plain proto3 scalar fields use *implicit presence*. A value equal to the field default (`false`, `0`, `""`) is **never transmitted**, and the wire bytes for "set to false" and "never set" are identical. After decoding, the field is simply missing:
+>
+> ```text
+> schema:  bool enabled = 1;
+> flow:    { "enabled": false } -> encode -> decode -> { }      enabled is gone!
+> ```
+>
+> This is standard protobuf behavior ([field presence guide](https://protobuf.dev/programming-guides/field_presence/)), not a bug in this node. When your flows must distinguish `false`/`0` from "not set", declare the field `optional` in proto3 — or use a proto2 or Editions schema, which track presence by default:
+>
+> ```text
+> schema:  optional bool enabled = 1;
+> flow:    { "enabled": false } -> encode -> decode -> { "enabled": false }
+> ```
+
 ## Examples
 
 This package ships importable example flows. In the Node-RED editor, open **Menu > Import > Examples > node-red-contrib-protobuf** and pick one:
