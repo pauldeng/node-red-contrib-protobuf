@@ -17,8 +17,39 @@ module.exports = function (RED) {
         this.delimitedOutput = config.delimitedOutput || 'messages';
         const node = this;
 
+        // Only push a status update when it actually changes. node.status()
+        // emits a runtime event per call, so skipping no-op updates keeps the
+        // per-message hot path cheap on busy flows.
+        let lastStatusKey = null;
+        function setStatus (status) {
+            const key = status.fill + '|' + status.shape + '|' + status.text;
+            if (key === lastStatusKey) {
+                return;
+            }
+            lastStatusKey = key;
+            node.status(status);
+        }
+
+        // Cache the resolved message type so a steady stream of the same type
+        // does not re-walk the proto namespace on every message. Keyed on the
+        // proto root identity so a protofile reload (which replaces the root)
+        // invalidates the cache automatically.
+        let cachedRoot = null;
+        let cachedName = null;
+        let cachedType = null;
+        function lookupMessageType (root, name) {
+            if (root === cachedRoot && name === cachedName) {
+                return cachedType;
+            }
+            const type = root.lookupType(name);
+            cachedRoot = root;
+            cachedName = name;
+            cachedType = type;
+            return type;
+        }
+
         function completeWithError (msg, done, error, statusText) {
-            node.status({fill: 'red', shape: 'dot', text: statusText});
+            setStatus({fill: 'red', shape: 'dot', text: statusText});
             if (done) {
                 done(error);
             }
@@ -47,22 +78,13 @@ module.exports = function (RED) {
                 completeWithError(msg, done, new Error('No .proto types loaded! Check that the file exists and that node-red has permission to access it.'), 'Protofile not ready');
                 return undefined;
             }
-            node.status({fill: 'green', shape: 'dot', text: 'Ready'});
             try {
-                return node.protofile.protoTypes.lookupType(msg.protobufType);
+                return lookupMessageType(node.protofile.protoTypes, msg.protobufType);
             }
             catch (error) {
-                node.warn(`
-Problem while looking up the message type.
-${error}
-Protofile object:
-${node.protofile.protopath}
-Prototypes content:
-${JSON.stringify(node.protofile.protoTypes)}
-With configured protoType:
-${msg.protobufType}
-                `);
-                node.status({fill: 'yellow', shape: 'dot', text: 'Message type not found'});
+                const available = Object.keys((node.protofile.protoTypes && node.protofile.protoTypes.nested) || {});
+                node.warn(`Problem while looking up the message type "${msg.protobufType}" in ${node.protofile.protopath}. Available types: ${available.join(', ') || '(none)'}. ${error}`);
+                setStatus({fill: 'yellow', shape: 'dot', text: 'Message type not found'});
                 completeWithoutError(done);
                 return undefined;
             }
@@ -83,7 +105,7 @@ ${msg.protobufType}
                     catch (exception) {
                         if (exception instanceof protobufjs.util.ProtocolError) {
                             node.warn('Received message contains empty fields. Incomplete message will be forwarded.');
-                            node.status({fill: 'yellow', shape: 'dot', text: 'Message incomplete'});
+                            setStatus({fill: 'yellow', shape: 'dot', text: 'Message incomplete'});
                             decodedMessages.push(messageType.toObject(exception.instance, decodeOptions));
                             break;
                         }
@@ -93,11 +115,11 @@ ${msg.protobufType}
                 }
                 if (decodedMessages.length === 0) {
                     node.warn('Delimited payload is empty. Nothing to decode.');
-                    node.status({fill: 'yellow', shape: 'dot', text: 'Payload empty'});
+                    setStatus({fill: 'yellow', shape: 'dot', text: 'Payload empty'});
                     completeWithoutError(done);
                     return;
                 }
-                node.status({fill: 'green', shape: 'dot', text: 'Processed'});
+                setStatus({fill: 'green', shape: 'dot', text: 'Processed'});
                 if (node.delimitedOutput === 'array') {
                     msg.payload = decodedMessages;
                     send(msg);
@@ -120,7 +142,7 @@ ${msg.protobufType}
             catch (exception) {
                 if (exception instanceof protobufjs.util.ProtocolError) {
                     node.warn('Received message contains empty fields. Incomplete message will be forwarded.');
-                    node.status({fill: 'yellow', shape: 'dot', text: 'Message incomplete'});
+                    setStatus({fill: 'yellow', shape: 'dot', text: 'Message incomplete'});
                     msg.payload = messageType.toObject(exception.instance, decodeOptions);
                     send(msg);
                     completeWithoutError(done);
@@ -130,7 +152,7 @@ ${msg.protobufType}
                 return;
             }
 
-            node.status({fill: 'green', shape: 'dot', text: 'Processed'});
+            setStatus({fill: 'green', shape: 'dot', text: 'Processed'});
             send(msg);
             completeWithoutError(done);
         });
