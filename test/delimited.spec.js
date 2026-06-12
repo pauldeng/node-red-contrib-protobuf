@@ -206,6 +206,62 @@ describe('protobuf delimited mode', function () {
         });
     });
 
+    // Regression guard for the varint endianness bug fixed in fork commit
+    // bveenema/node-red-protobuf@8e873cd: a hand-rolled big-endian varint
+    // parser misread length prefixes of two or more bytes, so delimited
+    // messages of 128 bytes or longer failed to decode. This package uses
+    // protobuf.js Reader/decodeDelimited, which reads varints little-endian
+    // per the protobuf wire spec; these tests pin that behavior.
+    it('should length-prefix a long message with a little-endian varint', function (done) {
+        const bigMessage = { test: 'x'.repeat(500) };
+        helper.load([encode, protofile], encodeFlow(), function () {
+            var helperNode = helper.getNode('helper-node');
+            helperNode.on('input', function (msg) {
+                try {
+                    const TestType = lookupTestType();
+                    const innerLength = TestType.encode(TestType.create(bigMessage)).finish().length;
+                    assert.ok(innerLength >= 128, 'message must need a multi-byte varint length prefix');
+                    const expectedPrefix = Buffer.from(protobuf.Writer.create().uint32(innerLength).finish());
+                    assert.ok(expectedPrefix.length >= 2, 'length prefix must span multiple varint bytes');
+                    assert.deepStrictEqual(msg.payload.subarray(0, expectedPrefix.length), expectedPrefix);
+                    assert.deepStrictEqual(readDelimited(msg.payload), [bigMessage]);
+                    done();
+                }
+                catch (error) {
+                    done(error);
+                }
+            });
+            helper.getNode('encode-node').receive({ payload: bigMessage });
+        });
+    });
+
+    it('should round trip long delimited messages between short ones', function (done) {
+        const mixedMessages = [
+            { test: 'short' },
+            { test: 'y'.repeat(20000) },
+            { test: 'also short', bar: true }
+        ];
+        var flow = [
+            { id: 'encode-node', type: 'encode', z: 'delimited-flow', protofile: 'proto-node', protoType: 'TestType', delimited: true, wires: [['decode-node']] },
+            { id: 'decode-node', type: 'decode', z: 'delimited-flow', protofile: 'proto-node', protoType: 'TestType', delimited: true, delimitedOutput: 'array', wires: [['helper-node']] },
+            { id: 'helper-node', type: 'helper', z: 'delimited-flow', wires: [[]] },
+            { id: 'proto-node', type: 'protobuf-file', z: '', protopath: 'test/assets/test.proto' }
+        ];
+        helper.load([encode, decode, protofile], flow, function () {
+            var helperNode = helper.getNode('helper-node');
+            helperNode.on('input', function (msg) {
+                try {
+                    assert.deepStrictEqual(msg.payload, mixedMessages);
+                    done();
+                }
+                catch (error) {
+                    done(error);
+                }
+            });
+            helper.getNode('encode-node').receive({ payload: mixedMessages });
+        });
+    });
+
     it('should report a corrupted delimited stream as a node error and send nothing', function (done) {
         helper.load([decode, protofile], decodeFlow(), function () {
             var decodeNode = helper.getNode('decode-node');
