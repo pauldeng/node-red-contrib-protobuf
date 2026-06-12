@@ -147,7 +147,7 @@ function encodeDecodeFlow () {
             id: 'proto-config',
             type: 'protobuf-file',
             z: '',
-            name: 'test.proto',
+            name: 'UI test schema',
             protopath: protoPath,
             watchFile: false,
             keepCase: false,
@@ -352,6 +352,9 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
                 protofile: {
                     hasPrototypesDefault: Object.prototype.hasOwnProperty.call(protofile.defaults, 'prototypes'),
                     protopathRequired: protofile.defaults.protopath.required,
+                    hasNameDefault: Object.prototype.hasOwnProperty.call(protofile.defaults, 'name'),
+                    labelWithName: protofile.label.call({ name: 'Custom schema name', protopath: '/srv/protos/thing.proto' }),
+                    labelWithoutName: protofile.label.call({ name: '', protopath: '/srv/protos/thing.proto' }),
                 },
             };
         });
@@ -368,6 +371,9 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
         expect(definitions.decode.outputLabel).toBe('object');
         expect(definitions.protofile.hasPrototypesDefault).toBe(false);
         expect(definitions.protofile.protopathRequired).toBe(true);
+        expect(definitions.protofile.hasNameDefault).toBe(true);
+        expect(definitions.protofile.labelWithName).toBe('Custom schema name');
+        expect(definitions.protofile.labelWithoutName).toBe('thing.proto');
         expect(definitions.encode.delimitedDefault).toBe(false);
         expect(definitions.decode.delimitedDefault).toBe(false);
         expect(definitions.decode.delimitedOutputDefault).toBe('messages');
@@ -378,6 +384,8 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
         await expect(page.locator('#node-input-protoType')).toHaveAttribute('placeholder', 'Example: package.Message');
         await expect(page.locator('#node-input-protobuf-type-tip')).toContainText('When msg.protobufType is set, the value overrides this field');
         await expect(page.locator('#node-input-delimited')).toBeVisible();
+        // The config-node dropdown shows the protobuf-file node's custom name.
+        await expect(page.locator('#node-input-protofile option:checked')).toHaveText('UI test schema');
         await closeNodeDialog(page);
 
         await openNodeDialog(page, 'decode-node');
@@ -395,6 +403,8 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
 
         await openNodeDialog(page, 'encode-node');
         await page.locator('#node-input-btn-protofile-edit').click();
+        await expect(page.locator('#node-config-input-name')).toBeVisible();
+        await expect(page.locator('label[for="node-config-input-name"]')).toContainText('Name');
         await expect(page.locator('#node-config-input-protopath')).toBeVisible();
         await expect(page.locator('label[for="node-config-input-protopath"]')).toContainText('Proto path');
         await expect(page.locator('label[for="node-config-input-watchFile"]')).toContainText('Watch file');

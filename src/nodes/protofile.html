@@ -2,11 +2,15 @@
     RED.nodes.registerType('protobuf-file', {
         category: 'config',
         defaults: {
+            name: { value: "" },
             protopath: { value: "", required: true, label: "Proto path" },
             watchFile: { value: true },
             keepCase: { value: false }
         },
         label: function() {
+            if (this.name) {
+                return this.name;
+            }
             var primaryPath = (this.protopath || "").split(",")[0].trim();
             if (!primaryPath) {
                 return "protobuf file";
@@ -49,6 +53,10 @@
 
 <script type="text/html" data-template-name="protobuf-file">
     <div class="form-row">
+        <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-config-input-name" placeholder="Optional display name">
+    </div>
+    <div class="form-row">
         <label for="node-config-input-protopath"><i class="fa fa-file-code-o"></i> Proto path</label>
         <input type="text" id="node-config-input-protopath" placeholder="/path/to/schema.proto">
     </div>
@@ -81,6 +89,7 @@ Loads one or more protobuf schema files for encode and decode nodes.
 
 ### Configuration
 
+: Name (string) : Optional display name shown in the configuration nodes panel and in the encode/decode proto file dropdown. Defaults to the file name when blank.
 : Proto path (string) : Path to a `.proto` file. Use commas to load multiple files.
 : Watch file (boolean) : Reloads the protobuf root when any configured file changes.
 : Keep case (boolean) : Passes `keepCase` to protobuf.js so snake_case field names stay unchanged.
