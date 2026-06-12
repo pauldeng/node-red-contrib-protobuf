@@ -290,6 +290,7 @@ test('Node-RED import menu lists the packaged example flows', async ({ page }) =
             '05 edition 2023 round trip',
             '06 edition 2024 round trip',
             '07 delimited stream',
+            '08 chained protos',
         ];
         for (const name of exampleNames) {
             await expect(examplesTab.locator('.red-ui-treeList-label', { hasText: name })).toBeVisible();

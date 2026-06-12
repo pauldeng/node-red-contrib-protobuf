@@ -1,0 +1,7 @@
+// Shared message types imported by sensor.proto.
+syntax = "proto3";
+
+message Header {
+    string device_id = 1;
+    double timestamp = 2;
+}

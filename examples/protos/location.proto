@@ -1,0 +1,7 @@
+// Shared message types imported by sensor.proto.
+syntax = "proto3";
+
+message Location {
+    double latitude = 1;
+    double longitude = 2;
+}

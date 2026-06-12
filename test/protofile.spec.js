@@ -94,6 +94,22 @@ describe('protobuf protofile node', function () {
     });
   });
 
+  it('should resolve imported proto files when only the root file is configured', function (done) {
+    var flow = [{ id: 'n1', type: 'protobuf-file', name: 'test name', protopath: 'examples/protos/sensor.proto' }];
+    helper.load(protofile, flow, function () {
+      var n1 = helper.getNode('n1');
+      try {
+        assert.strictEqual(typeof n1.protoTypes.SensorReport, 'object');
+        assert.strictEqual(typeof n1.protoTypes.Header, 'object', 'imported common.proto types should be loaded');
+        assert.strictEqual(typeof n1.protoTypes.Location, 'object', 'imported location.proto types should be loaded');
+        done();
+      }
+      catch (error) {
+        done(error);
+      }
+    });
+  });
+
   it('should load multiple files', function (done) {
     var flow = [{ id: 'n1', type: 'protobuf-file', name: 'test name', protopath: 'test/assets/test.proto,test/assets/issue3.proto' }];
     helper.load(protofile, flow, function () {

@@ -1,0 +1,14 @@
+// Root schema that chains other proto files together via imports.
+// Configure ONLY this file in the protobuf-file node: protobuf.js
+// loads common.proto and location.proto automatically because they
+// are imported here and live in the same folder.
+syntax = "proto3";
+
+import "common.proto";
+import "location.proto";
+
+message SensorReport {
+    Header header = 1;
+    Location location = 2;
+    double value = 3;
+}

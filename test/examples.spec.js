@@ -20,7 +20,8 @@ const examples = {
     '04 proto3 round trip.json': { proto: 'proto3.proto', protoType: 'TestType', kind: 'roundtrip' },
     '05 edition 2023 round trip.json': { proto: 'edition2023.proto', protoType: 'Edition2023Type', kind: 'roundtrip' },
     '06 edition 2024 round trip.json': { proto: 'edition2024.proto', protoType: 'Edition2024Type', kind: 'roundtrip' },
-    '07 delimited stream.json': { proto: 'proto3.proto', protoType: 'TestType', kind: 'delimited' }
+    '07 delimited stream.json': { proto: 'proto3.proto', protoType: 'TestType', kind: 'delimited' },
+    '08 chained protos.json': { proto: 'sensor.proto', protoType: 'SensorReport', kind: 'roundtrip', imports: ['common.proto', 'location.proto'] }
 };
 
 const allowedNodeTypes = ['comment', 'inject', 'function', 'debug', 'encode', 'decode', 'protobuf-file'];
@@ -100,6 +101,9 @@ describe('packaged example flows', function () {
                 assert.strictEqual(configNode.watchFile, false, 'examples must not watch files');
                 assert.strictEqual(configNode.protopath, packagedProtoPrefix + expected.proto);
                 assert.ok(fs.existsSync(path.join(protosDir, expected.proto)), 'referenced proto must ship in examples/protos');
+                (expected.imports || []).forEach(importedProto => {
+                    assert.ok(fs.existsSync(path.join(protosDir, importedProto)), `imported proto ${importedProto} must ship in examples/protos`);
+                });
 
                 nodes.filter(node => ['encode', 'decode'].includes(node.type)).forEach(node => {
                     assert.strictEqual(node.protofile, configNode.id, `${node.type} node must reference the example config node`);
