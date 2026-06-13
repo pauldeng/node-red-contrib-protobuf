@@ -97,6 +97,7 @@
         <label for="node-input-bytesType" style="width: 125px; flex: 0 0 125px; white-space: nowrap;"><i class="fa fa-file-o"></i> Bytes</label>
         <select id="node-input-bytesType" style="width: 260px;">
             <option value="String">String (base64)</option>
+            <option value="Base64Url">String (base64url)</option>
             <option value="Array">Array</option>
             <option value="Buffer">Buffer</option>
         </select>
@@ -164,7 +165,7 @@ The checkbox options are unchecked by default. protobuf.js treats omitted boolea
 | --- | --- | --- | --- |
 | Enums | `String` | Output enum names or numeric values. | `GREEN` as String -> `"GREEN"`; Number -> `1`. |
 | Longs | `String` | Output 64-bit integers as `String`, `Number`, `BigInt`, or a `Long` object. | String -> `"9007199254740993"`; BigInt -> `9007199254740993n`. |
-| Bytes | `String` | Output `bytes` fields as base64 `String`, byte `Array`, or `Buffer`. | String -> `"Af8="`; Array -> `[1,255]`; Buffer -> `<Buffer 01 ff>`. |
+| Bytes | `String` | Output `bytes` fields as base64 `String`, base64url `String`, byte `Array`, or `Buffer`. | String (base64) -> `"+/8="`; String (base64url) -> `"-_8"`; Array -> `[251,255]`; Buffer -> `<Buffer fb ff>`. |
 | Defaults | unchecked | Include unset fields with default values. | `{}` becomes `{ "color": "RED", "numbers": [], "labels": {} }` for unset fields. |
 | Empty arrays | unchecked | Include unset `repeated` fields without forcing all scalar defaults. | `{}` becomes `{ "numbers": [] }`. |
 | Empty objects | unchecked | Include unset `map` fields without forcing all scalar defaults. | `{}` becomes `{ "labels": {} }`. |

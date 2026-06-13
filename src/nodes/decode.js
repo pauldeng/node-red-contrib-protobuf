@@ -22,6 +22,9 @@ function buildDecodeOptions (config) {
     if (config.bytesType === 'Array') {
         options.bytes = Array;
     }
+    else if (config.bytesType === 'Base64Url') {
+        options.bytes = String;
+    }
     else if (config.bytesType !== 'Buffer') {
         options.bytes = String;
     }
@@ -41,6 +44,56 @@ function buildDecodeOptions (config) {
     return options;
 }
 
+function toBase64Url (value) {
+    return value.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function convertBytesToBase64Url (messageType, object) {
+    if (!object || typeof object !== 'object') {
+        return object;
+    }
+    for (const field of messageType.fieldsArray) {
+        const value = object[field.name];
+        if (value === undefined || value === null) {
+            continue;
+        }
+        if (field.type === 'bytes') {
+            if (field.map) {
+                for (const key of Object.keys(value)) {
+                    value[key] = toBase64Url(value[key]);
+                }
+            }
+            else if (field.repeated) {
+                object[field.name] = value.map(toBase64Url);
+            }
+            else {
+                object[field.name] = toBase64Url(value);
+            }
+        }
+        else if (field.resolvedType && field.resolvedType.fieldsArray) {
+            if (field.map) {
+                for (const key of Object.keys(value)) {
+                    convertBytesToBase64Url(field.resolvedType, value[key]);
+                }
+            }
+            else if (field.repeated) {
+                for (const item of value) {
+                    convertBytesToBase64Url(field.resolvedType, item);
+                }
+            }
+            else {
+                convertBytesToBase64Url(field.resolvedType, value);
+            }
+        }
+    }
+    return object;
+}
+
+function decodeToObject (messageType, message, options, bytesType) {
+    const object = messageType.toObject(message, options);
+    return bytesType === 'Base64Url' ? convertBytesToBase64Url(messageType, object) : object;
+}
+
 module.exports = function (RED) {
     function ProtobufDecodeNode (config) {
         RED.nodes.createNode(this, config);
@@ -50,6 +103,7 @@ module.exports = function (RED) {
         this.delimited = config.delimited === true;
         this.delimitedOutput = config.delimitedOutput || 'messages';
         this.decodeOptions = buildDecodeOptions(config);
+        this.bytesType = config.bytesType;
         const node = this;
 
         // Only push a status update when it actually changes. node.status()
@@ -135,13 +189,13 @@ module.exports = function (RED) {
                 while (reader.pos < reader.len) {
                     try {
                         const message = messageType.decodeDelimited(reader);
-                        decodedMessages.push(messageType.toObject(message, node.decodeOptions));
+                        decodedMessages.push(decodeToObject(messageType, message, node.decodeOptions, node.bytesType));
                     }
                     catch (exception) {
                         if (exception instanceof protobufjs.util.ProtocolError) {
                             node.warn('Received message contains empty fields. Incomplete message will be forwarded.');
                             setStatus({fill: 'yellow', shape: 'dot', text: 'Message incomplete'});
-                            decodedMessages.push(messageType.toObject(exception.instance, node.decodeOptions));
+                            decodedMessages.push(decodeToObject(messageType, exception.instance, node.decodeOptions, node.bytesType));
                             break;
                         }
                         completeWithError(msg, done, new Error(`Wire format is invalid: ${exception.message}`), 'Wire format invalid');
@@ -172,13 +226,13 @@ module.exports = function (RED) {
 
             try {
                 const message = messageType.decode(msg.payload);
-                msg.payload = messageType.toObject(message, node.decodeOptions);
+                msg.payload = decodeToObject(messageType, message, node.decodeOptions, node.bytesType);
             }
             catch (exception) {
                 if (exception instanceof protobufjs.util.ProtocolError) {
                     node.warn('Received message contains empty fields. Incomplete message will be forwarded.');
                     setStatus({fill: 'yellow', shape: 'dot', text: 'Message incomplete'});
-                    msg.payload = messageType.toObject(exception.instance, node.decodeOptions);
+                    msg.payload = decodeToObject(messageType, exception.instance, node.decodeOptions, node.bytesType);
                     send(msg);
                     completeWithoutError(done);
                     return;

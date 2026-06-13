@@ -21,6 +21,10 @@ function bigLongBuffer () {
     return buffer({ big: '9007199254740993' });
 }
 
+function base64UrlBytesBuffer () {
+    return buffer({ data: Buffer.from([251, 255]) });
+}
+
 function delimitedBuffer (payloads) {
     return Buffer.concat(payloads.map(function (payload) {
         return Buffer.from(OptionsType.encodeDelimited(OptionsType.create(payload)).finish());
@@ -107,6 +111,12 @@ describe('decode output options', function () {
     it('outputs bytes as a Buffer when bytesType is Buffer', function (done) {
         decodeWith({ bytesType: 'Buffer' }, populatedBuffer(), function (payload) {
             assert.ok(Buffer.isBuffer(payload.data));
+        }, done);
+    });
+
+    it('outputs bytes as a base64url string when bytesType is Base64Url', function (done) {
+        decodeWith({ bytesType: 'Base64Url' }, base64UrlBytesBuffer(), function (payload) {
+            assert.strictEqual(payload.data, '-_8');
         }, done);
     });
 

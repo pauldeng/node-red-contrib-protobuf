@@ -426,6 +426,7 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
         await expect(page.locator('#node-input-longsType')).toBeVisible();
         await expect(page.locator('#node-input-longsType')).toContainText('BigInt');
         await expect(page.locator('#node-input-bytesType')).toBeVisible();
+        await expect(page.locator('#node-input-bytesType')).toContainText('String (base64url)');
         await expect(page.locator('#node-input-enumsType')).toHaveValue('String');
         await expect(page.locator('#node-input-longsType')).toHaveValue('String');
         await expect(page.locator('#node-input-bytesType')).toHaveValue('String');
