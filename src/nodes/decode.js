@@ -1,11 +1,45 @@
 const protobufjs = require('protobufjs');
 
-const decodeOptions = {
-    longs: String,
-    enums: String,
-    bytes: String,
-    defaults: false, // includes default values, otherwise not transmitted values will be assigned their default value!
-};
+// Map the node config to a protobuf.js toObject() options object. Absent keys
+// fall back to the historical defaults (string enums/longs/bytes, no defaults),
+// so existing nodes decode exactly as before. 'Number' enums, 'Long' longs, and
+// 'Buffer' bytes are expressed by omitting those options, which keeps
+// protobuf.js' default representation for that type.
+function buildDecodeOptions (config) {
+    const options = {};
+    if (config.enumsType !== 'Number') {
+        options.enums = String;
+    }
+    if (config.longsType === 'Number') {
+        options.longs = Number;
+    }
+    else if (config.longsType === 'BigInt') {
+        options.longs = BigInt;
+    }
+    else if (config.longsType !== 'Long') {
+        options.longs = String;
+    }
+    if (config.bytesType === 'Array') {
+        options.bytes = Array;
+    }
+    else if (config.bytesType !== 'Buffer') {
+        options.bytes = String;
+    }
+    options.defaults = config.decodeDefaults === true;
+    if (config.decodeArrays === true) {
+        options.arrays = true;
+    }
+    if (config.decodeObjects === true) {
+        options.objects = true;
+    }
+    if (config.decodeOneofs === true) {
+        options.oneofs = true;
+    }
+    if (config.decodeJson === true) {
+        options.json = true;
+    }
+    return options;
+}
 
 module.exports = function (RED) {
     function ProtobufDecodeNode (config) {
@@ -15,6 +49,7 @@ module.exports = function (RED) {
         this.protoType = config.protoType;
         this.delimited = config.delimited === true;
         this.delimitedOutput = config.delimitedOutput || 'messages';
+        this.decodeOptions = buildDecodeOptions(config);
         const node = this;
 
         // Only push a status update when it actually changes. node.status()
@@ -100,13 +135,13 @@ module.exports = function (RED) {
                 while (reader.pos < reader.len) {
                     try {
                         const message = messageType.decodeDelimited(reader);
-                        decodedMessages.push(messageType.toObject(message, decodeOptions));
+                        decodedMessages.push(messageType.toObject(message, node.decodeOptions));
                     }
                     catch (exception) {
                         if (exception instanceof protobufjs.util.ProtocolError) {
                             node.warn('Received message contains empty fields. Incomplete message will be forwarded.');
                             setStatus({fill: 'yellow', shape: 'dot', text: 'Message incomplete'});
-                            decodedMessages.push(messageType.toObject(exception.instance, decodeOptions));
+                            decodedMessages.push(messageType.toObject(exception.instance, node.decodeOptions));
                             break;
                         }
                         completeWithError(msg, done, new Error(`Wire format is invalid: ${exception.message}`), 'Wire format invalid');
@@ -137,13 +172,13 @@ module.exports = function (RED) {
 
             try {
                 const message = messageType.decode(msg.payload);
-                msg.payload = messageType.toObject(message, decodeOptions);
+                msg.payload = messageType.toObject(message, node.decodeOptions);
             }
             catch (exception) {
                 if (exception instanceof protobufjs.util.ProtocolError) {
                     node.warn('Received message contains empty fields. Incomplete message will be forwarded.');
                     setStatus({fill: 'yellow', shape: 'dot', text: 'Message incomplete'});
-                    msg.payload = messageType.toObject(exception.instance, decodeOptions);
+                    msg.payload = messageType.toObject(exception.instance, node.decodeOptions);
                     send(msg);
                     completeWithoutError(done);
                     return;

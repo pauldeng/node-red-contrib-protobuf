@@ -348,6 +348,14 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
                     outputLabel: decode.outputLabels,
                     delimitedDefault: decode.defaults.delimited && decode.defaults.delimited.value,
                     delimitedOutputDefault: decode.defaults.delimitedOutput && decode.defaults.delimitedOutput.value,
+                    enumsTypeDefault: decode.defaults.enumsType && decode.defaults.enumsType.value,
+                    longsTypeDefault: decode.defaults.longsType && decode.defaults.longsType.value,
+                    bytesTypeDefault: decode.defaults.bytesType && decode.defaults.bytesType.value,
+                    decodeDefaultsDefault: decode.defaults.decodeDefaults && decode.defaults.decodeDefaults.value,
+                    decodeArraysDefault: decode.defaults.decodeArrays && decode.defaults.decodeArrays.value,
+                    decodeObjectsDefault: decode.defaults.decodeObjects && decode.defaults.decodeObjects.value,
+                    decodeOneofsDefault: decode.defaults.decodeOneofs && decode.defaults.decodeOneofs.value,
+                    decodeJsonDefault: decode.defaults.decodeJson && decode.defaults.decodeJson.value,
                 },
                 protofile: {
                     hasPrototypesDefault: Object.prototype.hasOwnProperty.call(protofile.defaults, 'prototypes'),
@@ -383,6 +391,14 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
         expect(definitions.encode.delimitedDefault).toBe(false);
         expect(definitions.decode.delimitedDefault).toBe(false);
         expect(definitions.decode.delimitedOutputDefault).toBe('messages');
+        expect(definitions.decode.enumsTypeDefault).toBe('String');
+        expect(definitions.decode.longsTypeDefault).toBe('String');
+        expect(definitions.decode.bytesTypeDefault).toBe('String');
+        expect(definitions.decode.decodeDefaultsDefault).toBe(false);
+        expect(definitions.decode.decodeArraysDefault).toBe(false);
+        expect(definitions.decode.decodeObjectsDefault).toBe(false);
+        expect(definitions.decode.decodeOneofsDefault).toBe(false);
+        expect(definitions.decode.decodeJsonDefault).toBe(false);
 
         await openNodeDialog(page, 'encode-node');
         await expect(page.locator('label[for="node-input-protofile"]')).toContainText('Proto file');
@@ -405,6 +421,45 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
         await expect(page.locator('#node-input-delimitedOutput-row')).toBeVisible();
         await page.locator('#node-input-delimited').uncheck();
         await expect(page.locator('#node-input-delimitedOutput-row')).toBeHidden();
+        // Output conversion options.
+        await expect(page.locator('#node-input-enumsType')).toBeVisible();
+        await expect(page.locator('#node-input-longsType')).toBeVisible();
+        await expect(page.locator('#node-input-longsType')).toContainText('BigInt');
+        await expect(page.locator('#node-input-bytesType')).toBeVisible();
+        await expect(page.locator('#node-input-enumsType')).toHaveValue('String');
+        await expect(page.locator('#node-input-longsType')).toHaveValue('String');
+        await expect(page.locator('#node-input-bytesType')).toHaveValue('String');
+        await expect(page.locator('#node-input-decodeDefaults')).toBeVisible();
+        await expect(page.locator('#node-input-decodeArrays')).toBeVisible();
+        await expect(page.locator('#node-input-decodeObjects')).toBeVisible();
+        await expect(page.locator('#node-input-decodeOneofs')).toBeVisible();
+        await expect(page.locator('#node-input-decodeJson')).toBeVisible();
+        const decodeOutputLayout = await page.evaluate(() => {
+            function rect (selector) {
+                return globalThis.document.querySelector(selector).getBoundingClientRect();
+            }
+            function centerY (selector) {
+                const box = rect(selector);
+                return box.top + (box.height / 2);
+            }
+            return {
+                selectWidths: [
+                    rect('#node-input-enumsType').width,
+                    rect('#node-input-longsType').width,
+                    rect('#node-input-bytesType').width,
+                ],
+                emptyArraysLabelHeight: rect('label[for="node-input-decodeArrays"]').height,
+                emptyObjectsLabelHeight: rect('label[for="node-input-decodeObjects"]').height,
+                emptyArraysAlignment: Math.abs(
+                    centerY('#node-input-decodeArrays')
+                    - centerY('#node-input-decodeArrays + span'),
+                ),
+            };
+        });
+        expect(Math.max(...decodeOutputLayout.selectWidths)).toBeLessThanOrEqual(320);
+        expect(decodeOutputLayout.emptyArraysLabelHeight).toBeLessThanOrEqual(24);
+        expect(decodeOutputLayout.emptyObjectsLabelHeight).toBeLessThanOrEqual(24);
+        expect(decodeOutputLayout.emptyArraysAlignment).toBeLessThanOrEqual(4);
         await closeNodeDialog(page);
 
         await openNodeDialog(page, 'encode-node');
@@ -487,6 +542,17 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
         expect(decodeHelp).toContain('partial decoded message');
         expect(decodeHelp).toContain('one message per decoded item');
         expect(decodeHelp).toContain('Example');
+        expect(decodeHelp).toContain('| Option | Default | Effect | Example |');
+        expect(decodeHelp).toContain('| Defaults | unchecked |');
+        expect(decodeHelp).toContain('| Empty arrays | unchecked |');
+        expect(decodeHelp).toContain('| Empty objects | unchecked |');
+        expect(decodeHelp).toContain('| Virtual oneofs | unchecked |');
+        expect(decodeHelp).toContain('| JSON floats | unchecked |');
+        expect(decodeHelp).toContain('Output option examples');
+        expect(decodeHelp).toContain('With **Defaults** checked');
+        expect(decodeHelp).toContain('With **Longs** set to `BigInt`');
+        expect(decodeHelp).toContain('With **Virtual oneofs** checked');
+        expect(decodeHelp).not.toContain(': Enums :');
         expect(decodeHelp).toContain('https://protobufjs.github.io/protobuf.js/Type.html');
         expect(decodeHelp).toContain('https://protobuf.dev/programming-guides/techniques/#streaming');
         expect(decodeHelp).toContain('[!WARNING]');

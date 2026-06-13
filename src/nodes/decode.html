@@ -8,6 +8,14 @@
             protoType: { value: "", required: false },
             delimited: { value: false },
             delimitedOutput: { value: "messages" },
+            enumsType: { value: "String" },
+            longsType: { value: "String" },
+            bytesType: { value: "String" },
+            decodeDefaults: { value: false },
+            decodeArrays: { value: false },
+            decodeObjects: { value: false },
+            decodeOneofs: { value: false },
+            decodeJson: { value: false },
         },
         inputs: 1,
         outputs: 1,
@@ -25,6 +33,16 @@
             };
             delimitedCheckbox.on("change", toggleOutputRow);
             toggleOutputRow();
+            [
+                ["enumsType", "String"],
+                ["longsType", "String"],
+                ["bytesType", "String"]
+            ].forEach(function(option) {
+                var input = $("#node-input-" + option[0]);
+                if (input.val() === null || input.val() === "") {
+                    input.val(option[1]);
+                }
+            });
         }
     });
 </script>
@@ -57,6 +75,57 @@
             <option value="array">Single message with array payload</option>
         </select>
     </div>
+    <hr>
+    <div class="form-row"><b>Output options</b></div>
+    <div class="form-row" style="display: flex; align-items: center;">
+        <label for="node-input-enumsType" style="width: 125px; flex: 0 0 125px; white-space: nowrap;"><i class="fa fa-list"></i> Enums</label>
+        <select id="node-input-enumsType" style="width: 260px;">
+            <option value="String">String (name)</option>
+            <option value="Number">Number (value)</option>
+        </select>
+    </div>
+    <div class="form-row" style="display: flex; align-items: center;">
+        <label for="node-input-longsType" style="width: 125px; flex: 0 0 125px; white-space: nowrap;"><i class="fa fa-hashtag"></i> Longs</label>
+        <select id="node-input-longsType" style="width: 260px;">
+            <option value="String">String</option>
+            <option value="Number">Number</option>
+            <option value="BigInt">BigInt</option>
+            <option value="Long">Long object</option>
+        </select>
+    </div>
+    <div class="form-row" style="display: flex; align-items: center;">
+        <label for="node-input-bytesType" style="width: 125px; flex: 0 0 125px; white-space: nowrap;"><i class="fa fa-file-o"></i> Bytes</label>
+        <select id="node-input-bytesType" style="width: 260px;">
+            <option value="String">String (base64)</option>
+            <option value="Array">Array</option>
+            <option value="Buffer">Buffer</option>
+        </select>
+    </div>
+    <div class="form-row" style="display: flex; align-items: center;">
+        <label for="node-input-decodeDefaults" style="width: 125px; flex: 0 0 125px; white-space: nowrap;"><i class="fa fa-asterisk"></i> Defaults</label>
+        <input type="checkbox" id="node-input-decodeDefaults" style="display: inline-block; width: auto; margin: 0 8px 0 0;">
+        <span>Include unset fields with their default values</span>
+    </div>
+    <div class="form-row" style="display: flex; align-items: center;">
+        <label for="node-input-decodeArrays" style="width: 125px; flex: 0 0 125px; white-space: nowrap;"><i class="fa fa-list-ul"></i> Empty arrays</label>
+        <input type="checkbox" id="node-input-decodeArrays" style="display: inline-block; width: auto; margin: 0 8px 0 0;">
+        <span>Include empty repeated fields as <code>[]</code></span>
+    </div>
+    <div class="form-row" style="display: flex; align-items: center;">
+        <label for="node-input-decodeObjects" style="width: 125px; flex: 0 0 125px; white-space: nowrap;"><i class="fa fa-th"></i> Empty objects</label>
+        <input type="checkbox" id="node-input-decodeObjects" style="display: inline-block; width: auto; margin: 0 8px 0 0;">
+        <span>Include empty map fields as <code>{}</code></span>
+    </div>
+    <div class="form-row" style="display: flex; align-items: center;">
+        <label for="node-input-decodeOneofs" style="width: 125px; flex: 0 0 125px; white-space: nowrap;"><i class="fa fa-code-fork"></i> Virtual oneofs</label>
+        <input type="checkbox" id="node-input-decodeOneofs" style="display: inline-block; width: auto; margin: 0 8px 0 0;">
+        <span>Add a property naming the set oneof field</span>
+    </div>
+    <div class="form-row" style="display: flex; align-items: center;">
+        <label for="node-input-decodeJson" style="width: 125px; flex: 0 0 125px; white-space: nowrap;"><i class="fa fa-shield"></i> JSON floats</label>
+        <input type="checkbox" id="node-input-decodeJson" style="display: inline-block; width: auto; margin: 0 8px 0 0;">
+        <span>Convert NaN and Infinity to strings</span>
+    </div>
 </script>
 
 <script type="text/markdown" data-help-name="decode">
@@ -64,24 +133,47 @@ Decodes a protobuf binary buffer into a JavaScript object.
 
 ### Inputs
 
-: payload (buffer) : Protobuf-encoded binary message.
-: protobufType (string) : Optional protobuf message type name. This value overrides the configured message type.
+| Property | Type | Description |
+| --- | --- | --- |
+| `msg.payload` | buffer | Protobuf-encoded binary message. |
+| `msg.protobufType` | string | Optional protobuf message type name. This value overrides the configured message type. |
 
 ### Outputs
 
-: payload (object | array) : JavaScript object containing decoded protobuf fields. With **Delimited** enabled and the array output selected, an array of objects.
-: protobufType (string) : Message type used for decoding.
+| Property | Type | Description |
+| --- | --- | --- |
+| `msg.payload` | object \| array | JavaScript object containing decoded protobuf fields. With **Delimited** enabled and array output selected, this is an array of objects. |
+| `msg.protobufType` | string | Message type used for decoding. |
 
 ### Configuration
 
-: Proto file (config) : Required protobuf-file configuration node.
-: Type (string) : Optional when `msg.protobufType` is set.
-: Delimited (boolean) : Reads length-prefixed messages (protobuf.js `decodeDelimited`). Off by default.
-: Output (select) : How decoded delimited messages are sent: one message per decoded item, or a single message with an array payload.
+| Field | Default | Description |
+| --- | --- | --- |
+| Proto file | required | `protobuf-file` configuration node that loads the schema. |
+| Type | empty | Message type to decode. Optional when `msg.protobufType` is set. |
+| Delimited | unchecked | Reads length-prefixed messages with protobuf.js `decodeDelimited`. |
+| Output | one message per decoded item | For delimited input, send one Node-RED message per decoded item or one message whose payload is an array. |
+
+### Output options
+
+These map to protobuf.js [`toObject` conversion options](https://protobufjs.github.io/protobuf.js/global.html#IConversionOptions). The defaults match the node's historical behaviour, so existing flows are unchanged.
+
+The checkbox options are unchecked by default. protobuf.js treats omitted boolean conversion options as false, so none of these checkboxes should be checked by default.
+
+| Option | Default | Effect | Example |
+| --- | --- | --- | --- |
+| Enums | `String` | Output enum names or numeric values. | `GREEN` as String -> `"GREEN"`; Number -> `1`. |
+| Longs | `String` | Output 64-bit integers as `String`, `Number`, `BigInt`, or a `Long` object. | String -> `"9007199254740993"`; BigInt -> `9007199254740993n`. |
+| Bytes | `String` | Output `bytes` fields as base64 `String`, byte `Array`, or `Buffer`. | String -> `"Af8="`; Array -> `[1,255]`; Buffer -> `<Buffer 01 ff>`. |
+| Defaults | unchecked | Include unset fields with default values. | `{}` becomes `{ "color": "RED", "numbers": [], "labels": {} }` for unset fields. |
+| Empty arrays | unchecked | Include unset `repeated` fields without forcing all scalar defaults. | `{}` becomes `{ "numbers": [] }`. |
+| Empty objects | unchecked | Include unset `map` fields without forcing all scalar defaults. | `{}` becomes `{ "labels": {} }`. |
+| Virtual oneofs | unchecked | Add a discriminator property named after the `oneof`. | Field `text` in oneof `choice` adds `"choice": "text"`. |
+| JSON floats | unchecked | Convert `NaN` and `Infinity` float values to strings. | `NaN` becomes `"NaN"`. |
 
 ### Details
 
-The node decodes `msg.payload` with protobuf.js and converts longs, enums, and bytes to strings.
+The node decodes `msg.payload` with protobuf.js. By default longs, enums, and bytes are converted to strings; use the Output options above to change that.
 
 msg.protobufType overrides the configured message type.
 
@@ -126,6 +218,78 @@ With **Delimited** enabled and a buffer holding two framed messages, the default
     { "test": "first" },
     { "test": "second" }
 ]
+```
+
+### Output option examples
+
+For a schema with enum `color`, repeated field `numbers`, map field `labels`, bytes field `data`, int64 field `big`, double field `ratio`, and oneof `choice`, the same decoded wire data can be converted into different JavaScript shapes.
+
+Default output:
+
+```json
+{
+    "color": "GREEN",
+    "data": "Af8=",
+    "big": "9007199254740993",
+    "text": "hi"
+}
+```
+
+With **Longs** set to `BigInt`, **Enums** set to `Number`, and **Bytes** set to `Array`:
+
+```js
+{
+    color: 1,
+    data: [1, 255],
+    big: 9007199254740993n,
+    text: "hi"
+}
+```
+
+With **Defaults** checked, unset fields are included:
+
+```json
+{
+    "color": "RED",
+    "numbers": [],
+    "labels": {},
+    "data": "",
+    "big": "0",
+    "ratio": 0
+}
+```
+
+With **Empty arrays** checked, only missing repeated fields are added:
+
+```json
+{
+    "numbers": []
+}
+```
+
+With **Empty objects** checked, only missing map fields are added:
+
+```json
+{
+    "labels": {}
+}
+```
+
+With **Virtual oneofs** checked and the `text` field set:
+
+```json
+{
+    "text": "hi",
+    "choice": "text"
+}
+```
+
+With **JSON floats** checked:
+
+```json
+{
+    "ratio": "NaN"
+}
 ```
 
 ### References
