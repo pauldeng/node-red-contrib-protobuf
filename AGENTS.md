@@ -41,7 +41,7 @@ npm test -- --grep "decode output options"
 npm run test:ui -- -g "Node-RED editor dialogs"
 ```
 
-`npm run test:docker` requires Docker or passwordless `sudo docker`. It runs a packaged integration suite in a Node Docker image with no published ports.
+`npm run test:docker` requires Docker or passwordless `sudo docker`. It runs `scripts/ensure-docker-ubuntu.sh` first, which checks Docker and on Ubuntu 22.04 / 24.04 / 26.04 will install Docker CE via apt when it is missing; on other systems the suite exits before Mocha starts and you need to install Docker yourself. The suite then runs a packaged integration test in a Node Docker image with no published ports.
 
 ## Verification Expectations
 

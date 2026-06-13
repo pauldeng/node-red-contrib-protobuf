@@ -5,6 +5,7 @@ const { spawnSync } = require("node:child_process");
 
 const ROOT = path.resolve(__dirname, "..");
 const DOCKER_IMAGE = process.env.NODE_DOCKER_IMAGE || `node:${process.versions.node}-alpine`;
+const ENSURE_DOCKER_SCRIPT = path.join(__dirname, "ensure-docker-ubuntu.sh");
 
 function canRun(command, args) {
     const result = spawnSync(command, args, {
@@ -38,6 +39,10 @@ function run(command, args) {
         throw new Error(`${command} ${args.join(" ")} exited with ${result.status}`);
     }
 }
+
+// Verify Docker is available (and on supported Ubuntu, install it) before
+// committing to running the suite. See scripts/ensure-docker-ubuntu.sh.
+run("bash", [ENSURE_DOCKER_SCRIPT]);
 
 const docker = resolveDockerCommand();
 run(docker[0], docker.slice(1).concat([

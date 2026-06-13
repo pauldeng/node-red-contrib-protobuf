@@ -26,6 +26,7 @@ npm run test:docker
 
 The runner:
 
+- calls `scripts/ensure-docker-ubuntu.sh` first to verify Docker works (and on Ubuntu 22.04 / 24.04 / 26.04, install Docker CE via apt when it is missing),
 - uses `docker` if available,
 - falls back to passwordless `sudo -n docker` if needed,
 - uses `node:${process.versions.node}-alpine` by default,

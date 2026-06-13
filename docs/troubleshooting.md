@@ -85,9 +85,12 @@ Check:
 
 ## Docker Tests Fail Before Mocha Starts
 
+`npm run test:docker` first runs `scripts/ensure-docker-ubuntu.sh`. That script verifies Docker is usable and, on Ubuntu 22.04 / 24.04 / 26.04, installs Docker CE via apt when it is missing. On other operating systems (macOS, Windows, non-Ubuntu Linux) or unsupported Ubuntu releases, it exits with a clear message and the suite stops before Mocha starts; install Docker yourself there.
+
 Check:
 
 - Docker is installed and running.
 - The current user can run `docker info`, or passwordless `sudo -n docker info` works.
+- If you are on supported Ubuntu, the user has `sudo` available so the ensure script can install Docker CE.
 - The image exists or can be pulled before running with `--network none`.
 - Override the image with `NODE_DOCKER_IMAGE` if needed.
