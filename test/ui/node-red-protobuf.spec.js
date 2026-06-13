@@ -338,6 +338,9 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
                     inputLabel: encode.inputLabels,
                     outputLabel: encode.outputLabels,
                     delimitedDefault: encode.defaults.delimited && encode.defaults.delimited.value,
+                    inputConversionDefault: encode.defaults.inputConversion && encode.defaults.inputConversion.value,
+                    inputBytesTypeDefault: encode.defaults.inputBytesType && encode.defaults.inputBytesType.value,
+                    validationFailureDefault: encode.defaults.validationFailure && encode.defaults.validationFailure.value,
                 },
                 decode: {
                     color: decode.color,
@@ -389,6 +392,9 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
         expect(definitions.protofile.sourceTypeDefault).toBe('file');
         expect(definitions.protofile.hasProtocontentDefault).toBe(true);
         expect(definitions.encode.delimitedDefault).toBe(false);
+        expect(definitions.encode.inputConversionDefault).toBe('strict');
+        expect(definitions.encode.inputBytesTypeDefault).toBe('String');
+        expect(definitions.encode.validationFailureDefault).toBe('warn');
         expect(definitions.decode.delimitedDefault).toBe(false);
         expect(definitions.decode.delimitedOutputDefault).toBe('messages');
         expect(definitions.decode.enumsTypeDefault).toBe('String');
@@ -406,6 +412,35 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
         await expect(page.locator('#node-input-protoType')).toHaveAttribute('placeholder', 'Example: package.Message');
         await expect(page.locator('#node-input-protobuf-type-tip')).toContainText('When msg.protobufType is set, the value overrides this field');
         await expect(page.locator('#node-input-delimited')).toBeVisible();
+        await expect(page.locator('text=Input options')).toBeVisible();
+        await expect(page.locator('#node-input-inputConversion')).toBeVisible();
+        await expect(page.locator('#node-input-inputConversion')).toHaveValue('strict');
+        await expect(page.locator('#node-input-inputConversion')).toContainText('Convert plain object');
+        await expect(page.locator('#node-input-inputBytesType')).toBeVisible();
+        await expect(page.locator('#node-input-inputBytesType')).toHaveValue('String');
+        await expect(page.locator('#node-input-inputBytesType')).toContainText('String (base64url)');
+        await expect(page.locator('#node-input-validationFailure')).toBeVisible();
+        await expect(page.locator('#node-input-validationFailure')).toHaveValue('warn');
+        await expect(page.locator('#node-input-validationFailure')).toContainText('Raise error');
+        const encodeInputLayout = await page.evaluate(() => {
+            function rect (selector) {
+                return globalThis.document.querySelector(selector).getBoundingClientRect();
+            }
+            return {
+                inputConversionLabelHeight: rect('label[for="node-input-inputConversion"]').height,
+                validationFailureLabelHeight: rect('label[for="node-input-validationFailure"]').height,
+                inputBytesTypeLabelHeight: rect('label[for="node-input-inputBytesType"]').height,
+                selectWidths: [
+                    rect('#node-input-inputConversion').width,
+                    rect('#node-input-inputBytesType').width,
+                    rect('#node-input-validationFailure').width,
+                ],
+            };
+        });
+        expect(encodeInputLayout.inputConversionLabelHeight).toBeLessThanOrEqual(24);
+        expect(encodeInputLayout.inputBytesTypeLabelHeight).toBeLessThanOrEqual(24);
+        expect(encodeInputLayout.validationFailureLabelHeight).toBeLessThanOrEqual(24);
+        expect(Math.max(...encodeInputLayout.selectWidths)).toBeLessThanOrEqual(320);
         // The config-node dropdown shows the protobuf-file node's custom name.
         await expect(page.locator('#node-input-protofile option:checked')).toHaveText('UI test schema');
         await closeNodeDialog(page);
@@ -534,6 +569,10 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
 
         expect(encodeHelp).toContain('msg.protobufType overrides the configured message type');
         expect(encodeHelp).toContain('Delimited');
+        expect(encodeHelp).toContain('Convert plain object');
+        expect(encodeHelp).toContain('String (base64url)');
+        expect(encodeHelp).toContain('protobuf.js fromObject');
+        expect(encodeHelp).toContain('Raise error');
         expect(encodeHelp).toContain('Example');
         expect(encodeHelp).toContain('https://protobufjs.github.io/protobuf.js/Type.html');
         expect(encodeHelp).toContain('https://protobuf.dev/programming-guides/encoding/');
@@ -557,6 +596,7 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
         expect(decodeHelp).toContain('https://protobufjs.github.io/protobuf.js/Type.html');
         expect(decodeHelp).toContain('https://protobuf.dev/programming-guides/techniques/#streaming');
         expect(decodeHelp).toContain('[!WARNING]');
+        expect(decodeHelp).toContain('`BigInt` is not JSON-serializable');
         expect(decodeHelp).toContain('false vs not set');
         expect(decodeHelp).toContain('optional bool enabled = 1;');
         expect(decodeHelp).toContain('https://protobuf.dev/programming-guides/field_presence/');

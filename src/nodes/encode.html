@@ -19,6 +19,15 @@
             delimited: {
                 value: false
             },
+            inputConversion: {
+                value: "strict"
+            },
+            inputBytesType: {
+                value: "String"
+            },
+            validationFailure: {
+                value: "warn"
+            },
         },
         inputs: 1,
         outputs: 1,
@@ -27,6 +36,18 @@
         outputLabels: "protobuf buffer",
         label: function () {
             return this.name || "encode";
+        },
+        oneditprepare: function() {
+            [
+                ["inputConversion", "strict"],
+                ["inputBytesType", "String"],
+                ["validationFailure", "warn"]
+            ].forEach(function(option) {
+                var input = $("#node-input-" + option[0]);
+                if (input.val() === null || input.val() === "") {
+                    input.val(option[1]);
+                }
+            });
         }
     });
 </script>
@@ -52,6 +73,29 @@
         <input type="checkbox" id="node-input-delimited" style="display: inline-block; width: auto; vertical-align: top;">
         <span>Length-prefix each message (stream framing)</span>
     </div>
+    <hr>
+    <div class="form-row"><b>Input options</b></div>
+    <div class="form-row" style="display: flex; align-items: center;">
+        <label for="node-input-inputConversion" style="width: 140px; flex: 0 0 140px; white-space: nowrap;"><i class="fa fa-exchange"></i> Input conversion</label>
+        <select id="node-input-inputConversion" style="width: 260px;">
+            <option value="strict">Strict</option>
+            <option value="fromObject">Convert plain object</option>
+        </select>
+    </div>
+    <div class="form-row" style="display: flex; align-items: center;">
+        <label for="node-input-inputBytesType" style="width: 140px; flex: 0 0 140px; white-space: nowrap;"><i class="fa fa-file-o"></i> Bytes</label>
+        <select id="node-input-inputBytesType" style="width: 260px;">
+            <option value="String">String (base64)</option>
+            <option value="Base64Url">String (base64url)</option>
+        </select>
+    </div>
+    <div class="form-row" style="display: flex; align-items: center;">
+        <label for="node-input-validationFailure" style="width: 140px; flex: 0 0 140px; white-space: nowrap;"><i class="fa fa-exclamation-triangle"></i> Invalid payload</label>
+        <select id="node-input-validationFailure" style="width: 260px;">
+            <option value="warn">Warn and drop</option>
+            <option value="error">Raise error</option>
+        </select>
+    </div>
 </script>
 
 <script type="text/markdown" data-help-name="encode">
@@ -73,13 +117,21 @@ Encodes a JavaScript object into a protobuf binary buffer.
 : Type (string) : Optional when `msg.protobufType` is set.
 : Delimited (boolean) : Prefixes each message with its byte length (protobuf.js `encodeDelimited`). Off by default.
 
+### Input options
+
+: Input conversion (string) : **Strict** verifies the payload as supplied. **Convert plain object** uses protobuf.js fromObject before encoding, accepting JSON-friendly values such as enum names, base64 bytes strings, and string 64-bit integers.
+: Bytes (string) : **String (base64)** expects normal base64 strings for `bytes` fields. **String (base64url)** accepts URL-safe base64 strings such as `-_8`.
+: Invalid payload (string) : **Warn and drop** logs a warning and sends nothing. **Raise error** reports an error so Node-RED Catch nodes can handle invalid payloads.
+
 ### Details
 
 The node verifies `msg.payload` against the selected protobuf message type and encodes it with protobuf.js.
 
+With **Input conversion** set to **Convert plain object**, the payload is first converted with protobuf.js `fromObject()`. This is useful when messages arrive from JSON sources where enums are strings, bytes fields are base64 or base64url strings, or 64-bit integers are decimal strings.
+
 msg.protobufType overrides the configured message type.
 
-If the payload does not match the selected type, the node reports a warning and does not send a message.
+If the payload does not match the selected type, the node reports a warning and sends nothing by default. Set **Invalid payload** to **Raise error** when invalid messages should be handled by a Node-RED Catch node.
 
 With **Delimited** enabled, the payload may be a single object or an array of objects. Each object becomes one length-prefixed message and the output buffer contains them back to back - the framing used for streams and files of concatenated messages.
 

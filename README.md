@@ -65,6 +65,7 @@ The matching schemas live in `examples/protos/`. Each flow's comment node explai
 
 * Encode JSON payload to protobuf messages
 * Decode protobuf messages to JSON payload
+* Configurable encode input handling (strict validation or protobuf.js `fromObject` conversion, base64/base64url bytes strings, warning or error on invalid payloads)
 * Configurable decode output (enum/long/bytes representation, include defaults, empty arrays/objects, virtual oneofs, JSON-compatible NaN/Infinity values)
 * Encode and decode length-delimited message streams (protobuf.js `encodeDelimited`/`decodeDelimited`)
 * Load protobuf file(s) from the local file system

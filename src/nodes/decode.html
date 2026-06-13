@@ -172,6 +172,9 @@ The checkbox options are unchecked by default. protobuf.js treats omitted boolea
 | Virtual oneofs | unchecked | Add a discriminator property named after the `oneof`. | Field `text` in oneof `choice` adds `"choice": "text"`. |
 | JSON floats | unchecked | Convert `NaN` and `Infinity` float values to strings. | `NaN` becomes `"NaN"`. |
 
+> [!WARNING]
+> **Longs: `BigInt` is not JSON-serializable.** A `BigInt` value throws `TypeError: Do not know how to serialize a BigInt` when passed through `JSON.stringify`, which breaks the Debug sidebar, the JSON node, and MQTT/HTTP output. Use `String` (the default) for flows that serialise to JSON; choose `BigInt` only when the value stays in JavaScript for exact 64-bit maths. The **JSON floats** option does not cover this.
+
 ### Details
 
 The node decodes `msg.payload` with protobuf.js. By default longs, enums, and bytes are converted to strings; use the Output options above to change that.

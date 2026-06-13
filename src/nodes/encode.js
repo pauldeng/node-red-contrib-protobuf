@@ -1,5 +1,55 @@
 const protobufjs = require('protobufjs');
 
+function fromBase64Url (value) {
+    const converted = value.replace(/-/g, '+').replace(/_/g, '/');
+    const padding = converted.length % 4;
+    return padding === 0 ? converted : converted + '='.repeat(4 - padding);
+}
+
+function normalizeBase64UrlBytes (messageType, object) {
+    if (!object || typeof object !== 'object') {
+        return object;
+    }
+    const normalized = Array.isArray(object) ? object.slice() : { ...object };
+    for (const field of messageType.fieldsArray) {
+        const value = normalized[field.name];
+        if (value === undefined || value === null) {
+            continue;
+        }
+        if (field.type === 'bytes') {
+            if (field.map) {
+                normalized[field.name] = Object.fromEntries(Object.entries(value).map(function ([key, item]) {
+                    return [key, typeof item === 'string' ? fromBase64Url(item) : item];
+                }));
+            }
+            else if (field.repeated) {
+                normalized[field.name] = value.map(function (item) {
+                    return typeof item === 'string' ? fromBase64Url(item) : item;
+                });
+            }
+            else if (typeof value === 'string') {
+                normalized[field.name] = fromBase64Url(value);
+            }
+        }
+        else if (field.resolvedType && field.resolvedType.fieldsArray) {
+            if (field.map) {
+                normalized[field.name] = Object.fromEntries(Object.entries(value).map(function ([key, item]) {
+                    return [key, normalizeBase64UrlBytes(field.resolvedType, item)];
+                }));
+            }
+            else if (field.repeated) {
+                normalized[field.name] = value.map(function (item) {
+                    return normalizeBase64UrlBytes(field.resolvedType, item);
+                });
+            }
+            else {
+                normalized[field.name] = normalizeBase64UrlBytes(field.resolvedType, value);
+            }
+        }
+    }
+    return normalized;
+}
+
 module.exports = function (RED) {
     function ProtobufEncodeNode (config) {
         RED.nodes.createNode(this, config);
@@ -7,6 +57,9 @@ module.exports = function (RED) {
         this.protofile = RED.nodes.getNode(config.protofile);
         this.protoType = config.protoType;
         this.delimited = config.delimited === true;
+        this.inputConversion = config.inputConversion === 'fromObject' ? 'fromObject' : 'strict';
+        this.inputBytesType = config.inputBytesType === 'Base64Url' ? 'Base64Url' : 'String';
+        this.validationFailure = config.validationFailure === 'error' ? 'error' : 'warn';
         const node = this;
 
         // Only push a status update when it actually changes. node.status()
@@ -56,6 +109,48 @@ module.exports = function (RED) {
             }
         }
 
+        function invalidPayloadMessage (index) {
+            if (index === undefined) {
+                return 'Message is not valid under selected message type.';
+            }
+            return `Message at index ${index} is not valid under selected message type.`;
+        }
+
+        function completeInvalidPayload (msg, done, error) {
+            if (node.validationFailure === 'error') {
+                completeWithError(msg, done, error, 'Message invalid');
+                return;
+            }
+            node.warn(error.message);
+            setStatus({fill: 'yellow', shape: 'dot', text: 'Message invalid'});
+            completeWithoutError(done);
+        }
+
+        function preparePayload (messageType, payload, index) {
+            const messageText = invalidPayloadMessage(index);
+            const input = node.inputBytesType === 'Base64Url'
+                ? normalizeBase64UrlBytes(messageType, payload)
+                : payload;
+            if (node.inputConversion === 'fromObject') {
+                try {
+                    const message = messageType.fromObject(input);
+                    const reason = messageType.verify(message);
+                    if (reason) {
+                        return { error: new Error(`${messageText} ${reason}`) };
+                    }
+                    return { message };
+                }
+                catch (error) {
+                    return { error: new Error(`${messageText} ${error.message}`) };
+                }
+            }
+
+            if (messageType.verify(input)) {
+                return { error: new Error(messageText) };
+            }
+            return { message: messageType.create(input) };
+        }
+
         function resolveMessageType (msg, done) {
             msg.protobufType = msg.protobufType || node.protoType;
             if (msg.protobufType === undefined) {
@@ -89,17 +184,18 @@ module.exports = function (RED) {
             if (node.delimited) {
                 // Each payload object becomes one length-prefixed message in a single buffer.
                 const payloads = Array.isArray(msg.payload) ? msg.payload : [msg.payload];
+                const messages = [];
                 for (const [index, payload] of payloads.entries()) {
-                    if (messageType.verify(payload)) {
-                        node.warn(`Message at index ${index} is not valid under selected message type.`);
-                        setStatus({fill: 'yellow', shape: 'dot', text: 'Message invalid'});
-                        completeWithoutError(done);
+                    const prepared = preparePayload(messageType, payload, index);
+                    if (prepared.error) {
+                        completeInvalidPayload(msg, done, prepared.error);
                         return;
                     }
+                    messages.push(prepared.message);
                 }
                 const writer = protobufjs.Writer.create();
-                for (const payload of payloads) {
-                    messageType.encodeDelimited(messageType.create(payload), writer);
+                for (const message of messages) {
+                    messageType.encodeDelimited(message, writer);
                 }
                 msg.payload = writer.finish();
                 setStatus({fill: 'green', shape: 'dot', text: 'Processed'});
@@ -108,14 +204,13 @@ module.exports = function (RED) {
                 return;
             }
 
-            if (messageType.verify(msg.payload)) {
-                node.warn('Message is not valid under selected message type.');
-                setStatus({fill: 'yellow', shape: 'dot', text: 'Message invalid'});
-                completeWithoutError(done);
+            const prepared = preparePayload(messageType, msg.payload);
+            if (prepared.error) {
+                completeInvalidPayload(msg, done, prepared.error);
                 return;
             }
             // create a protobuf message and convert it into a buffer
-            msg.payload = messageType.encode(messageType.create(msg.payload)).finish();
+            msg.payload = messageType.encode(prepared.message).finish();
             setStatus({fill: 'green', shape: 'dot', text: 'Processed'});
             send(msg);
             completeWithoutError(done);
