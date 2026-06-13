@@ -16,6 +16,7 @@
     "coverage": "nyc --reporter=text --reporter=lcov npm test",
     "lint": "eslint .",
     "lint-fix": "eslint . --fix",
+    "test:docker": "node scripts/run-docker-tests.js",
     "update:protobufjs-fixtures": "node scripts/update-protobufjs-fixtures.js"
   },
   "repository": {
