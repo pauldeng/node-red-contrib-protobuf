@@ -1,9 +1,14 @@
 // Fixture exercising every protobuf.js toObject conversion option:
 // an enum, a repeated field, a map, bytes, a 64-bit integer, a oneof,
-// and a double (for NaN / Safe JSON).
+// a double (for NaN / Safe JSON), and nested/repeated/map bytes fields
+// for encode input conversion coverage.
 syntax = "proto3";
 
 message OptionsType {
+    message Nested {
+        bytes data = 1;
+    }
+
     enum Color {
         RED = 0;
         GREEN = 1;
@@ -18,4 +23,9 @@ message OptionsType {
         string text = 7;
         int32 count = 8;
     }
+    repeated bytes chunks = 9;
+    map<string, bytes> data_by_name = 10;
+    Nested nested = 11;
+    repeated Nested nested_items = 12;
+    map<string, Nested> nested_by_name = 13;
 }

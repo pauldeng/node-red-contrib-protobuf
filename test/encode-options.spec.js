@@ -16,6 +16,27 @@ function encodeFlow (options) {
     ];
 }
 
+function toObject (buffer) {
+    return OptionsType.toObject(OptionsType.decode(buffer), {
+        enums: String,
+        longs: String,
+        bytes: String
+    });
+}
+
+function readDelimited (buffer) {
+    const reader = protobuf.Reader.create(buffer);
+    const messages = [];
+    while (reader.pos < reader.len) {
+        messages.push(OptionsType.toObject(OptionsType.decodeDelimited(reader), {
+            enums: String,
+            longs: String,
+            bytes: String
+        }));
+    }
+    return messages;
+}
+
 describe('encode input options', function () {
 
     afterEach(function () {
@@ -28,12 +49,7 @@ describe('encode input options', function () {
             helperNode.on('input', function (msg) {
                 try {
                     assert.ok(Buffer.isBuffer(msg.payload));
-                    const decoded = OptionsType.toObject(OptionsType.decode(msg.payload), {
-                        enums: String,
-                        longs: String,
-                        bytes: String
-                    });
-                    assert.deepStrictEqual(decoded, {
+                    assert.deepStrictEqual(toObject(msg.payload), {
                         color: 'GREEN',
                         data: '+/8=',
                         big: '9007199254740993',
@@ -76,10 +92,7 @@ describe('encode input options', function () {
             var helperNode = helper.getNode('h');
             helperNode.on('input', function (msg) {
                 try {
-                    const decoded = OptionsType.toObject(OptionsType.decode(msg.payload), {
-                        bytes: String
-                    });
-                    assert.strictEqual(decoded.data, '+/8=');
+                    assert.strictEqual(toObject(msg.payload).data, '+/8=');
                     done();
                 }
                 catch (error) {
@@ -87,6 +100,79 @@ describe('encode input options', function () {
                 }
             });
             helper.getNode('n').receive({ payload: { data: '-_8' } });
+        });
+    });
+
+    it('normalizes base64url bytes in repeated, map, and nested fields', function (done) {
+        helper.load([encode, protofile], encodeFlow({
+            inputConversion: 'fromObject',
+            inputBytesType: 'Base64Url'
+        }), function () {
+            var helperNode = helper.getNode('h');
+            helperNode.on('input', function (msg) {
+                try {
+                    assert.deepStrictEqual(toObject(msg.payload), {
+                        data: '+/8=',
+                        chunks: ['AQI=', '+/8='],
+                        dataByName: { first: '+/8=' },
+                        nested: { data: '+/8=' },
+                        nestedItems: [
+                            { data: 'AQI=' },
+                            { data: '+/8=' }
+                        ],
+                        nestedByName: {
+                            first: { data: '+/8=' }
+                        }
+                    });
+                    done();
+                }
+                catch (error) {
+                    done(error);
+                }
+            });
+            helper.getNode('n').receive({
+                payload: {
+                    data: '-_8',
+                    chunks: ['AQI', '-_8'],
+                    dataByName: { first: '-_8' },
+                    nested: { data: '-_8' },
+                    nestedItems: [
+                        { data: 'AQI' },
+                        { data: '-_8' }
+                    ],
+                    nestedByName: {
+                        first: { data: '-_8' }
+                    }
+                }
+            });
+        });
+    });
+
+    it('applies input conversion and base64url bytes to delimited array output', function (done) {
+        helper.load([encode, protofile], encodeFlow({
+            delimited: true,
+            inputConversion: 'fromObject',
+            inputBytesType: 'Base64Url'
+        }), function () {
+            var helperNode = helper.getNode('h');
+            helperNode.on('input', function (msg) {
+                try {
+                    assert.deepStrictEqual(readDelimited(msg.payload), [
+                        { color: 'GREEN', data: '+/8=', big: '42', text: 'first' },
+                        { color: 'GREEN', data: 'AQI=', big: '7', count: 2 }
+                    ]);
+                    done();
+                }
+                catch (error) {
+                    done(error);
+                }
+            });
+            helper.getNode('n').receive({
+                payload: [
+                    { color: 'GREEN', data: '-_8', big: '42', text: 'first' },
+                    { color: 'GREEN', data: 'AQI', big: '7', count: 2 }
+                ]
+            });
         });
     });
 
@@ -110,6 +196,58 @@ describe('encode input options', function () {
                 }
             });
             encodeNode.receive({ payload: 'invalid payload' });
+        });
+    });
+
+    it('reports delimited invalid payloads as errors with the failing index', function (done) {
+        helper.load([encode, protofile], encodeFlow({
+            delimited: true,
+            validationFailure: 'error'
+        }), function () {
+            var encodeNode = helper.getNode('n');
+            var helperNode = helper.getNode('h');
+            helperNode.on('input', function () {
+                done(new Error('nothing should be sent for an invalid payload'));
+            });
+            encodeNode.on('call:warn', function () {
+                done(new Error('invalid payload should be reported as an error'));
+            });
+            encodeNode.on('call:error', function (call) {
+                try {
+                    assert.match(String(call.args[0]), /Message at index 1 is not valid/);
+                    done();
+                }
+                catch (error) {
+                    done(error);
+                }
+            });
+            encodeNode.receive({ payload: [{ data: Buffer.from([1]) }, 'invalid payload'] });
+        });
+    });
+
+    it('reports fromObject conversion failures as errors when configured', function (done) {
+        helper.load([encode, protofile], encodeFlow({
+            inputConversion: 'fromObject',
+            validationFailure: 'error'
+        }), function () {
+            var encodeNode = helper.getNode('n');
+            var helperNode = helper.getNode('h');
+            helperNode.on('input', function () {
+                done(new Error('nothing should be sent for an invalid payload'));
+            });
+            encodeNode.on('call:warn', function () {
+                done(new Error('invalid payload should be reported as an error'));
+            });
+            encodeNode.on('call:error', function (call) {
+                try {
+                    assert.match(String(call.args[0]), /labels: object expected/);
+                    done();
+                }
+                catch (error) {
+                    done(error);
+                }
+            });
+            encodeNode.receive({ payload: { labels: 'invalid map' } });
         });
     });
 });
