@@ -4,7 +4,7 @@ This is the canonical, AI-neutral working guide for this repository. Keep it sho
 
 ## Project Snapshot
 
-- Package: `node-red-contrib-protobuf`
+- Package: `@pauldeng/node-red-contrib-protobuf` (npm); historical fork of unscoped `node-red-contrib-protobuf` by w4tsn.
 - Runtime: CommonJS Node.js package for Node-RED.
 - Main entrypoint: `src/index.js`.
 - Node support: `>=20.19.0` from `package.json`.

@@ -11,7 +11,7 @@ helper.init(require.resolve('node-red'));
 
 const examplesDir = path.resolve(__dirname, '..', 'examples');
 const protosDir = path.join(examplesDir, 'protos');
-const packagedProtoPrefix = 'node_modules/node-red-contrib-protobuf/examples/protos/';
+const packagedProtoPrefix = 'node_modules/@pauldeng/node-red-contrib-protobuf/examples/protos/';
 
 const examples = {
     '01 encode basics.json': { proto: 'proto3.proto', protoType: 'TestType', kind: 'encode' },

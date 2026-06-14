@@ -3,7 +3,7 @@
         "id": "chained-protos-comment",
         "type": "comment",
         "name": "Chained protos: one root file imports the rest",
-        "info": "Schemas can be split across files and chained together with `import` statements. `sensor.proto` is the root:\n\n```proto\nimport \"common.proto\";\nimport \"location.proto\";\n\nmessage SensorReport {\n    Header header = 1;\n    Location location = 2;\n    double value = 3;\n}\n```\n\nThe protobuf-file config node lists **only the root file** - protobuf.js loads `common.proto` and `location.proto` automatically because they are imported and live in the same folder. (Comma-separated paths are still available for loading unrelated files side by side.)\n\nClick the inject button: the nested payload is encoded into one `SensorReport` message and decoded back, including the `Header` and `Location` types that come from the imported files.\n\nThe protobuf-file config node points at:\n\n    node_modules/node-red-contrib-protobuf/examples/protos/sensor.proto\n\nThis relative path works when Node-RED runs from your user directory (for example `~/.node-red`). If the proto file fails to load, open the protobuf-file config node and enter the absolute path on your machine.",
+        "info": "Schemas can be split across files and chained together with `import` statements. `sensor.proto` is the root:\n\n```proto\nimport \"common.proto\";\nimport \"location.proto\";\n\nmessage SensorReport {\n    Header header = 1;\n    Location location = 2;\n    double value = 3;\n}\n```\n\nThe protobuf-file config node lists **only the root file** - protobuf.js loads `common.proto` and `location.proto` automatically because they are imported and live in the same folder. (Comma-separated paths are still available for loading unrelated files side by side.)\n\nClick the inject button: the nested payload is encoded into one `SensorReport` message and decoded back, including the `Header` and `Location` types that come from the imported files.\n\nThe protobuf-file config node points at:\n\n    node_modules/@pauldeng/node-red-contrib-protobuf/examples/protos/sensor.proto\n\nThis relative path works when Node-RED runs from your user directory (for example `~/.node-red`). If the proto file fails to load, open the protobuf-file config node and enter the absolute path on your machine.",
         "x": 250,
         "y": 60,
         "wires": []
@@ -64,7 +64,7 @@
     {
         "id": "chained-protos-protofile",
         "type": "protobuf-file",
-        "protopath": "node_modules/node-red-contrib-protobuf/examples/protos/sensor.proto",
+        "protopath": "node_modules/@pauldeng/node-red-contrib-protobuf/examples/protos/sensor.proto",
         "watchFile": false,
         "keepCase": false
     }

@@ -1,15 +1,19 @@
 {
-  "name": "node-red-contrib-protobuf",
-  "version": "1.1.2",
-  "description": "Protocol buffer encode/decode nodes.",
+  "name": "@pauldeng/node-red-contrib-protobuf",
+  "version": "2.0.0",
+  "description": "Node-RED nodes for encoding and decoding Protocol Buffers.",
   "type": "commonjs",
   "main": "src/index.js",
   "files": [
     "src",
     "examples",
     "README.md",
-    "LICENCE"
+    "CHANGELOG.md",
+    "LICENSE"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "test": "mocha \"test/**/*spec.js\" --ignore \"test/ui/**/*.spec.js\"",
     "test:ui": "playwright test",
@@ -25,9 +29,20 @@
   },
   "keywords": [
     "node-red",
-    "protobuf"
+    "node-red-contrib",
+    "protobuf",
+    "protocol-buffers",
+    "protobufjs",
+    "proto3",
+    "proto2",
+    "encode",
+    "decode",
+    "iot"
   ],
-  "author": "Alexander Wellbrock <a.wellbrock@mailbox.org>",
+  "author": "Paul Deng <paul.deng@gallagher.com>",
+  "contributors": [
+    "Alexander Wellbrock <a.wellbrock@mailbox.org> (original author)"
+  ],
   "license": "BSD-3-Clause",
   "bugs": {
     "url": "https://github.com/pauldeng/node-red-contrib-protobuf/issues"

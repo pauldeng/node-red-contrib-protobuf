@@ -3,7 +3,7 @@
         "id": "decode-basics-comment",
         "type": "comment",
         "name": "Decode protobuf bytes into a JavaScript object",
-        "info": "The function node supplies a hard-coded protobuf message in hex form - this is exactly what protobuf wire bytes look like. They were produced by the encode node (any protobuf library produces the same bytes) from this payload:\n\n    {\"timestamp\":1533295590569,\"foo\":1.5,\"bar\":true,\"test\":\"Hello from the decode example\",\"noMoreSnakeCase\":true}\n\nClick the inject button: the decode node turns the Buffer back into that JavaScript object using the `TestType` message from the proto file.\n\nTip: setting `msg.protobufType` on an incoming message overrides the type configured in the node.\n\nThe protobuf-file config node points at:\n\n    node_modules/node-red-contrib-protobuf/examples/protos/proto3.proto\n\nThis relative path works when Node-RED runs from your user directory (for example `~/.node-red`). If the proto file fails to load, open the protobuf-file config node and enter the absolute path on your machine.",
+        "info": "The function node supplies a hard-coded protobuf message in hex form - this is exactly what protobuf wire bytes look like. They were produced by the encode node (any protobuf library produces the same bytes) from this payload:\n\n    {\"timestamp\":1533295590569,\"foo\":1.5,\"bar\":true,\"test\":\"Hello from the decode example\",\"noMoreSnakeCase\":true}\n\nClick the inject button: the decode node turns the Buffer back into that JavaScript object using the `TestType` message from the proto file.\n\nTip: setting `msg.protobufType` on an incoming message overrides the type configured in the node.\n\nThe protobuf-file config node points at:\n\n    node_modules/@pauldeng/node-red-contrib-protobuf/examples/protos/proto3.proto\n\nThis relative path works when Node-RED runs from your user directory (for example `~/.node-red`). If the proto file fails to load, open the protobuf-file config node and enter the absolute path on your machine.",
         "x": 250,
         "y": 60,
         "wires": []
@@ -69,7 +69,7 @@
     {
         "id": "decode-basics-protofile",
         "type": "protobuf-file",
-        "protopath": "node_modules/node-red-contrib-protobuf/examples/protos/proto3.proto",
+        "protopath": "node_modules/@pauldeng/node-red-contrib-protobuf/examples/protos/proto3.proto",
         "watchFile": false,
         "keepCase": false
     }

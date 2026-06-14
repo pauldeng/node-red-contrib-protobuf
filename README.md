@@ -1,4 +1,4 @@
-# node-red-contrib-protobuf
+# @pauldeng/node-red-contrib-protobuf
 
 Encode and decode [Protocol Buffers](https://protobuf.dev/) in Node-RED flows.
 
@@ -17,13 +17,13 @@ proto2, proto3, and Protobuf Editions 2023 / 2024 are supported.
 
 ## Install
 
-From the Node-RED editor: **Menu > Manage palette > Install**, then search for `node-red-contrib-protobuf`.
+From the Node-RED editor: **Menu > Manage palette > Install**, then search for `@pauldeng/node-red-contrib-protobuf` (or just `protobuf`).
 
 From a shell, in your Node-RED user directory:
 
 ```bash
 cd ~/.node-red
-npm install node-red-contrib-protobuf
+npm install @pauldeng/node-red-contrib-protobuf
 ```
 
 ## Quick start
@@ -37,7 +37,7 @@ Use the **Validate & list types** button in the protobuf-file dialog to confirm 
 
 ## Examples
 
-Importable example flows are bundled with the package. Open **Menu > Import > Examples > node-red-contrib-protobuf** in the Node-RED editor:
+Importable example flows are bundled with the package. Open **Menu > Import > Examples > @pauldeng/node-red-contrib-protobuf** in the Node-RED editor:
 
 | # | Example | Shows |
 | --- | --- | --- |

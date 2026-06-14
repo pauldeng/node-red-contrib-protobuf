@@ -11,8 +11,8 @@ const RED = require('node-red');
 
 helper.init(require.resolve('node-red'));
 
-const packageName = 'node-red-contrib-protobuf';
-const packagedProtoPath = 'node_modules/node-red-contrib-protobuf/examples/protos/proto3.proto';
+const packageName = '@pauldeng/node-red-contrib-protobuf';
+const packagedProtoPath = 'node_modules/@pauldeng/node-red-contrib-protobuf/examples/protos/proto3.proto';
 
 async function listen (server) {
     const listening = once(server, 'listening', { signal: globalThis.AbortSignal.timeout(3000) });

@@ -76,6 +76,6 @@ When adding a runtime option, update:
 
 ## Examples
 
-`examples/*.json` flows are discovered by Node-RED when the package is installed. The filename (minus `.json`) becomes the entry under **Import > Examples > node-red-contrib-protobuf** in the editor, so renaming a flow file changes the user-visible menu label.
+`examples/*.json` flows are discovered by Node-RED when the package is installed. The filename (minus `.json`) becomes the entry under **Import > Examples > @pauldeng/node-red-contrib-protobuf** in the editor, so renaming a flow file changes the user-visible menu label.
 
-`examples/protos/*.proto` are the schemas these flows reference. Example flows resolve schema paths against the Node-RED runtime working directory; the shipped paths assume `~/.node-red/node_modules/node-red-contrib-protobuf/`.
+`examples/protos/*.proto` are the schemas these flows reference. Example flows resolve schema paths against the Node-RED runtime working directory; the shipped paths assume `~/.node-red/node_modules/@pauldeng/node-red-contrib-protobuf/`.

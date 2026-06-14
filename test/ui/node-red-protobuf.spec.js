@@ -158,21 +158,22 @@ function encodeDecodeFlow () {
 async function startNodeRed () {
     const userDir = await fs.mkdtemp(path.join(os.tmpdir(), 'node-red-protobuf-ui-'));
     const nodeModulesDir = path.join(userDir, 'node_modules');
-    const moduleLink = path.join(nodeModulesDir, 'node-red-contrib-protobuf');
+    const scopeDir = path.join(nodeModulesDir, '@pauldeng');
+    const moduleLink = path.join(scopeDir, 'node-red-contrib-protobuf');
     const settingsPath = path.join(userDir, 'settings.js');
     const flowPath = path.join(userDir, 'flows.json');
     const port = await getFreePort();
     const baseUrl = `http://127.0.0.1:${port}`;
     const processOutput = [];
 
-    await fs.mkdir(nodeModulesDir, { recursive: true });
+    await fs.mkdir(scopeDir, { recursive: true });
     await fs.symlink(repoRoot, moduleLink, process.platform === 'win32' ? 'junction' : 'dir');
     await fs.writeFile(
         path.join(userDir, 'package.json'),
         JSON.stringify({
             private: true,
             dependencies: {
-                'node-red-contrib-protobuf': `file:${repoRoot}`,
+                '@pauldeng/node-red-contrib-protobuf': `file:${repoRoot}`,
             },
         }, null, 2),
     );
@@ -278,7 +279,7 @@ test('Node-RED import menu lists the packaged example flows', async ({ page }) =
         await expect(page.locator('#red-ui-clipboard-dialog')).toBeVisible();
 
         const examplesTab = page.locator('#red-ui-clipboard-dialog-import-tab-examples');
-        const packageEntry = examplesTab.locator('.red-ui-treeList-label', { hasText: 'node-red-contrib-protobuf' });
+        const packageEntry = examplesTab.locator('.red-ui-treeList-label', { hasText: '@pauldeng/node-red-contrib-protobuf' });
         await expect(packageEntry).toBeVisible();
         await packageEntry.locator('i.fa-angle-right').click();
 

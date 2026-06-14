@@ -3,7 +3,7 @@
         "id": "delimited-stream-comment",
         "type": "comment",
         "name": "Delimited: a stream of length-prefixed messages",
-        "info": "Delimited framing prefixes every message with its byte length, so several messages can travel back to back in one buffer - the format used for TCP streams and files of concatenated protobuf messages.\n\nBoth nodes have **Delimited** enabled here:\n\n- The encode node accepts a single object or an array. The inject payload is an array of three objects, so the output buffer contains three length-prefixed messages.\n- The decode node reads every message in the buffer. By default it sends **one message per decoded item** (three debug entries). Open the decode node and switch the Output option to receive a single message with an array payload instead.\n\nThe protobuf-file config node points at:\n\n    node_modules/node-red-contrib-protobuf/examples/protos/proto3.proto\n\nThis relative path works when Node-RED runs from your user directory (for example `~/.node-red`). If the proto file fails to load, open the protobuf-file config node and enter the absolute path on your machine.",
+        "info": "Delimited framing prefixes every message with its byte length, so several messages can travel back to back in one buffer - the format used for TCP streams and files of concatenated protobuf messages.\n\nBoth nodes have **Delimited** enabled here:\n\n- The encode node accepts a single object or an array. The inject payload is an array of three objects, so the output buffer contains three length-prefixed messages.\n- The decode node reads every message in the buffer. By default it sends **one message per decoded item** (three debug entries). Open the decode node and switch the Output option to receive a single message with an array payload instead.\n\nThe protobuf-file config node points at:\n\n    node_modules/@pauldeng/node-red-contrib-protobuf/examples/protos/proto3.proto\n\nThis relative path works when Node-RED runs from your user directory (for example `~/.node-red`). If the proto file fails to load, open the protobuf-file config node and enter the absolute path on your machine.",
         "x": 250,
         "y": 60,
         "wires": []
@@ -67,7 +67,7 @@
     {
         "id": "delimited-stream-protofile",
         "type": "protobuf-file",
-        "protopath": "node_modules/node-red-contrib-protobuf/examples/protos/proto3.proto",
+        "protopath": "node_modules/@pauldeng/node-red-contrib-protobuf/examples/protos/proto3.proto",
         "watchFile": false,
         "keepCase": false
     }
