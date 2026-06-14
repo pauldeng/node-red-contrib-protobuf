@@ -95,6 +95,7 @@ For contributors and AI coding agents, deeper docs live in [`AGENTS.md`](AGENTS.
 - [`docs/testing.md`](docs/testing.md) - test commands and placement.
 - [`docs/change-workflow.md`](docs/change-workflow.md) - test-first rule, verification gates, commit discipline.
 - [`docs/troubleshooting.md`](docs/troubleshooting.md) - common failure modes and remedies.
+- [`docs/publishing.md`](docs/publishing.md) - release runbook (npm Trusted Publisher, tag-driven workflow).
 
 ## Contributing
 
