@@ -240,7 +240,8 @@ describe('protobuf Docker integration', function () {
             'examples/04 proto3 round trip.json',
             'examples/protos/proto3.proto',
             'README.md',
-            'LICENCE'
+            'CHANGELOG.md',
+            'LICENSE'
         ].forEach(function (file) {
             assert.ok(packaged.files.includes(file), `${file} is missing from npm pack output`);
         });

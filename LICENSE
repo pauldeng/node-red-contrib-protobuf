@@ -1,8 +1,9 @@
 BSD 3-Clause License
 
 Copyright (c) 2018 Alexander Wellbrock (a.wellbrock@mailbox.org)
+Copyright (c) 2026 Paul Deng (paul.deng@gallagher.com)
 All rights reserved.
-node-red-contrib-protobuf
+@pauldeng/node-red-contrib-protobuf (fork of node-red-contrib-protobuf)
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:

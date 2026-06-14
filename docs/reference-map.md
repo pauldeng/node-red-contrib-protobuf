@@ -7,7 +7,7 @@ Use this map to find the smallest relevant file for a change.
 - `package.json`: package metadata, published file list, scripts, Node-RED node map.
 - `src/index.js`: registers all Node-RED node constructors.
 - `README.md`: public package usage, features, examples, and contribution notes.
-- `LICENCE`: BSD 3-Clause license.
+- `LICENSE`: BSD 3-Clause license.
 
 ## Runtime Source
 

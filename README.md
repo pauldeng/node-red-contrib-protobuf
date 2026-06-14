@@ -1,5 +1,10 @@
 # @pauldeng/node-red-contrib-protobuf
 
+[![npm](https://img.shields.io/npm/v/@pauldeng/node-red-contrib-protobuf)](https://www.npmjs.com/package/@pauldeng/node-red-contrib-protobuf)
+[![CI](https://github.com/pauldeng/node-red-contrib-protobuf/actions/workflows/ci.yml/badge.svg)](https://github.com/pauldeng/node-red-contrib-protobuf/actions/workflows/ci.yml)
+[![Node](https://img.shields.io/node/v/@pauldeng/node-red-contrib-protobuf)](https://nodejs.org/)
+[![License](https://img.shields.io/npm/l/@pauldeng/node-red-contrib-protobuf)](LICENSE)
+
 Encode and decode [Protocol Buffers](https://protobuf.dev/) in Node-RED flows.
 
 This package adds three Node-RED nodes built on [protobuf.js](https://github.com/protobufjs/protobuf.js):
@@ -81,6 +86,8 @@ Each flow's comment node explains what it shows. The schemas live in `examples/p
 
 Full per-node options and help are in the editor's info sidebar - open any node and switch to the help tab.
 
+Release history and migration notes are in [`CHANGELOG.md`](CHANGELOG.md).
+
 For contributors and AI coding agents, deeper docs live in [`AGENTS.md`](AGENTS.md) and [`docs/`](docs/):
 
 - [`docs/architecture.md`](docs/architecture.md) - runtime flow, performance invariants, editor UI conventions.
@@ -102,6 +109,28 @@ npm run test:ui      # Playwright editor tests
 npm run test:docker  # packaged integration tests (requires Docker)
 ```
 
+## Maintenance / fork
+
+This is a maintained fork of the original [`node-red-contrib-protobuf`](https://www.npmjs.com/package/node-red-contrib-protobuf) by [Alexander Wellbrock](https://w4tsn.github.io/blog) (last published 2023-01-06). The fork is published under the `@pauldeng/` npm scope; the Node-RED node types (`encode`, `decode`, `protobuf-file`) are unchanged so existing flows continue to load.
+
+Differences from the unscoped 1.1.x line:
+
+- `protobufjs` upgraded from 6.x to 8.x.
+- Node.js floor raised to `>=20.19.0`; Node-RED floor raised to `>=4.1.0`.
+- proto2, Editions 2023, and Editions 2024 round-trip coverage.
+- Delimited streams, inline `.proto` definitions, validate-and-list-types endpoint.
+- Renovated editor dialogs and palette appearance.
+
+To switch from the unscoped package:
+
+```bash
+cd ~/.node-red
+npm uninstall node-red-contrib-protobuf
+npm install @pauldeng/node-red-contrib-protobuf
+```
+
+If your saved flows hard-coded `node_modules/node-red-contrib-protobuf/examples/protos/...` as a `protopath`, rewrite the path to `node_modules/@pauldeng/node-red-contrib-protobuf/examples/protos/...`, switch to an absolute path on disk, or re-import the example flow from **Import → Examples** to pick up the new path.
+
 ## License
 
-[BSD 3-Clause](LICENCE). Original author: [Alexander Wellbrock](https://w4tsn.github.io/blog).
+[BSD 3-Clause](LICENSE). Original author: [Alexander Wellbrock](https://w4tsn.github.io/blog).
