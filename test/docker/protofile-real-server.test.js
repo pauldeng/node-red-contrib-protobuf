@@ -84,6 +84,7 @@ function createPackagedInstall () {
     run('tar', ['-xzf', tarball, '-C', extractDir]);
 
     const installedDir = path.join(consumerNodeModules, packageName);
+    fs.mkdirSync(path.dirname(installedDir), { recursive: true });
     fs.renameSync(path.join(extractDir, 'package'), installedDir);
 
     const packageJson = JSON.parse(fs.readFileSync(path.join(installedDir, 'package.json'), 'utf8'));
