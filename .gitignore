@@ -4,3 +4,13 @@ coverage/
 test-results/
 playwright-report/
 blob-report/
+
+# Local planning / working documents (not shipped, not committed)
+GOAL.md
+PLAN.md
+PLAN-CLAUDE.md
+PLAN-MERGED.md
+PLAN-PUBLISH.md
+
+# Local code-intelligence index
+.codegraph/
