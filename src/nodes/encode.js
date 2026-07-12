@@ -128,11 +128,11 @@ module.exports = function (RED) {
 
         function preparePayload (messageType, payload, index) {
             const messageText = invalidPayloadMessage(index);
-            const input = node.inputBytesType === 'Base64Url'
-                ? normalizeBase64UrlBytes(messageType, payload)
-                : payload;
-            if (node.inputConversion === 'fromObject') {
-                try {
+            try {
+                const input = node.inputBytesType === 'Base64Url'
+                    ? normalizeBase64UrlBytes(messageType, payload)
+                    : payload;
+                if (node.inputConversion === 'fromObject') {
                     const message = messageType.fromObject(input);
                     const reason = messageType.verify(message);
                     if (reason) {
@@ -140,15 +140,15 @@ module.exports = function (RED) {
                     }
                     return { message };
                 }
-                catch (error) {
-                    return { error: new Error(`${messageText} ${error.message}`) };
-                }
-            }
 
-            if (messageType.verify(input)) {
-                return { error: new Error(messageText) };
+                if (messageType.verify(input)) {
+                    return { error: new Error(messageText) };
+                }
+                return { message: messageType.create(input) };
             }
-            return { message: messageType.create(input) };
+            catch (error) {
+                return { error: new Error(`${messageText} ${error.message}`) };
+            }
         }
 
         function resolveMessageType (msg, done) {
