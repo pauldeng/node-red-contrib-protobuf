@@ -4,6 +4,10 @@ All notable changes to this package will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Fixed
+
+- Delimited proto2 decoding now continues with trailing frames after forwarding a partial message that is missing required fields.
+
 ## [2.0.0] - TBD
 
 First release under the `@pauldeng/` npm scope. Continuation of [`node-red-contrib-protobuf`](https://www.npmjs.com/package/node-red-contrib-protobuf) `1.1.2` by [Alexander Wellbrock](https://w4tsn.github.io/blog), which has been unmaintained since 2023-01-06.

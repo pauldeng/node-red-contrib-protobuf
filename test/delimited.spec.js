@@ -312,6 +312,34 @@ describe('protobuf delimited mode', function () {
         });
     });
 
+    it('should continue decoding after a partial delimited proto2 message', function (done) {
+        var flow = [
+            { id: 'decode-node', type: 'decode', z: 'delimited-flow', protofile: 'proto-node', protoType: 'Proto2Type', delimited: true, delimitedOutput: 'array', wires: [['helper-node']] },
+            { id: 'helper-node', type: 'helper', z: 'delimited-flow', wires: [[]] },
+            { id: 'proto-node', type: 'protobuf-file', z: '', protopath: 'test/assets/proto2.proto' }
+        ];
+        const Proto2Type = new protobuf.Root().loadSync('test/assets/proto2.proto').lookupType('Proto2Type');
+        const writer = protobuf.Writer.create();
+        // Raw frame for a message that truly misses the required name field on the
+        // wire: protobuf.js always writes required fields when encoding, so the
+        // bytes are crafted directly (field 2 "note" = "partial only").
+        writer.bytes(Buffer.from([18, 12, 112, 97, 114, 116, 105, 97, 108, 32, 111, 110, 108, 121]));
+        Proto2Type.encodeDelimited(Proto2Type.create({ name: 'complete' }), writer);
+        helper.load([decode, protofile], flow, function () {
+            var helperNode = helper.getNode('helper-node');
+            helperNode.on('input', function (msg) {
+                try {
+                    assert.deepStrictEqual(msg.payload, [{ note: 'partial only' }, { name: 'complete' }]);
+                    done();
+                }
+                catch (error) {
+                    done(error);
+                }
+            });
+            helper.getNode('decode-node').receive({ payload: Buffer.from(writer.finish()) });
+        });
+    });
+
     it('should warn and send nothing for an empty delimited buffer', function (done) {
         helper.load([decode, protofile], decodeFlow(), function () {
             var decodeNode = helper.getNode('decode-node');

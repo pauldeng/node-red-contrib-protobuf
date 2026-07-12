@@ -196,7 +196,7 @@ module.exports = function (RED) {
                             node.warn('Received message contains empty fields. Incomplete message will be forwarded.');
                             setStatus({fill: 'yellow', shape: 'dot', text: 'Message incomplete'});
                             decodedMessages.push(decodeToObject(messageType, exception.instance, node.decodeOptions, node.bytesType));
-                            break;
+                            continue;
                         }
                         completeWithError(msg, done, new Error(`Wire format is invalid: ${exception.message}`), 'Wire format invalid');
                         return;
