@@ -148,6 +148,32 @@ describe('encode input options', function () {
         });
     });
 
+    it('routes invalid repeated base64url bytes through warn-and-drop', function (done) {
+        helper.load([encode, protofile], encodeFlow({
+            inputConversion: 'fromObject',
+            inputBytesType: 'Base64Url'
+        }), function () {
+            var encodeNode = helper.getNode('n');
+            var helperNode = helper.getNode('h');
+            helperNode.on('input', function () {
+                done(new Error('nothing should be sent for an invalid payload'));
+            });
+            encodeNode.on('call:error', function (call) {
+                done(new Error(`invalid payload should warn, not error: ${call.args[0]}`));
+            });
+            encodeNode.on('call:warn', function (call) {
+                try {
+                    assert.match(String(call.args[0]), /Message is not valid under selected message type/);
+                    done();
+                }
+                catch (error) {
+                    done(error);
+                }
+            });
+            encodeNode.receive({ payload: { chunks: 'not an array' } });
+        });
+    });
+
     it('applies input conversion and base64url bytes to delimited array output', function (done) {
         helper.load([encode, protofile], encodeFlow({
             delimited: true,

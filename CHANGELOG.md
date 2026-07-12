@@ -7,6 +7,7 @@ All notable changes to this package will be documented in this file. The format 
 ### Fixed
 
 - Delimited proto2 decoding now continues with trailing frames after forwarding a partial message that is missing required fields.
+- Invalid repeated, map, or nested base64url byte values now follow the configured warn-or-error validation behavior instead of escaping as a `TypeError`.
 
 ## [2.0.0] - TBD
 
