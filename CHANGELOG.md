@@ -4,6 +4,8 @@ All notable changes to this package will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-07-12
+
 ### Changed
 
 - Updated protobuf.js to 8.7.0 and refreshed the Playwright, ESLint, and Node-RED development toolchain.
