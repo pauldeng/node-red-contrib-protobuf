@@ -22,6 +22,8 @@ Options:
 - `keepCase`: preserves protobuf field casing when loading or parsing.
 - `watchFile`: watches file-mode schemas and reloads on change. Inline schemas are not watched.
 
+When file watching is enabled, the node watches the configured files and every imported file resolved by protobuf.js. A successful reload replaces the complete root and refreshes the watcher set. If a reload fails, the error is reported and the last successfully loaded root remains active.
+
 Admin endpoint:
 
 - `POST /protobuf-file/types`

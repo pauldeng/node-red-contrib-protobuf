@@ -8,6 +8,7 @@ All notable changes to this package will be documented in this file. The format 
 
 - Delimited proto2 decoding now continues with trailing frames after forwarding a partial message that is missing required fields.
 - Invalid repeated, map, or nested base64url byte values now follow the configured warn-or-error validation behavior instead of escaping as a `TypeError`.
+- File watch mode now reloads changes to imported schemas and no longer claims a failed reload succeeded; the existing last-good schema remains active after failure.
 
 ## [2.0.0] - TBD
 
