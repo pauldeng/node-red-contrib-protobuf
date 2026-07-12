@@ -90,33 +90,37 @@ module.exports = function (RED) {
         this.watchFile = config.watchFile !== false;
         this.keepCase = config.keepCase;
         const protoFileNode = this;
+        let reloadTimer = null;
 
         protoFileNode.load = function () {
             try {
                 protoFileNode.protoTypes = loadProtoTypes(protoFileNode);
+                return true;
             }
             catch (error) {
                 protoFileNode.error('Proto file could not be loaded. ' + error);
+                return false;
             }
         };
-        protoFileNode.watchProtopath = function () {
-            const watchedFiles = Array.isArray(protoFileNode.protopath) ? protoFileNode.protopath : [protoFileNode.protopath];
-            // Editors and fs.watch can fire several change events per save,
-            // so changes are batched into a single reload of all files.
-            let reloadTimer = null;
-            const scheduleReload = function () {
-                clearTimeout(reloadTimer);
-                reloadTimer = setTimeout(() => {
-                    protoFileNode.load();
-                    protoFileNode.log('Protobuf file changed on disk. Reloaded.');
-                }, 50);
-            };
+        protoFileNode.closeWatchers = function () {
+            (protoFileNode.protoFileWatchers || []).forEach((watcher) => watcher.close());
             protoFileNode.protoFileWatchers = [];
-            for (const watchedFile of watchedFiles) {
+        };
+        protoFileNode.watchProtopath = function () {
+            protoFileNode.closeWatchers();
+            for (const watchedFile of protoFileNode.protoTypes.files) {
                 try {
                     protoFileNode.protoFileWatchers.push(fs.watch(watchedFile, (eventType) => {
                         if (eventType === 'change') {
-                            scheduleReload();
+                            // Editors and fs.watch can fire several change events per save,
+                            // so changes are batched into a single reload of all files.
+                            clearTimeout(reloadTimer);
+                            reloadTimer = setTimeout(() => {
+                                if (protoFileNode.load()) {
+                                    protoFileNode.watchProtopath();
+                                    protoFileNode.log('Protobuf file changed on disk. Reloaded.');
+                                }
+                            }, 50);
                         }
                     }));
                 }
@@ -124,12 +128,11 @@ module.exports = function (RED) {
                     protoFileNode.error(`Error when trying to watch ${watchedFile} on disk: ` + error);
                 }
             }
-            protoFileNode.on('close', () => {
-                clearTimeout(reloadTimer);
-                protoFileNode.protoFileWatchers.forEach((watcher) => watcher.close());
-                protoFileNode.protoFileWatchers = [];
-            });
         };
+        protoFileNode.on('close', () => {
+            clearTimeout(reloadTimer);
+            protoFileNode.closeWatchers();
+        });
         protoFileNode.load();
         // Inline definitions have no file to watch.
         if (protoFileNode.protoTypes !== undefined && protoFileNode.sourceType !== 'inline' && protoFileNode.watchFile) {

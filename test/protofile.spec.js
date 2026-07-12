@@ -155,6 +155,78 @@ describe('protobuf protofile node', function () {
     });
   });
 
+  it('should watch and reload imported proto files', function (done) {
+    var tmpDir = fs.mkdtempSync('/tmp/node-red-protobuf-import-watch-');
+    var rootProto = `${tmpDir}/root.proto`;
+    var importedProto = `${tmpDir}/shared.proto`;
+    var flow = [{ id: 'n1', type: 'protobuf-file', protopath: rootProto }];
+
+    fs.writeFileSync(rootProto, 'syntax = "proto3"; import "shared.proto"; message Envelope { Shared shared = 1; }');
+    fs.writeFileSync(importedProto, 'syntax = "proto3"; message Shared { string first = 1; }');
+
+    const finish = function (error) {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+      done(error);
+    };
+
+    helper.load(protofile, flow, function () {
+      var n1 = helper.getNode('n1');
+      try {
+        assert.strictEqual(n1.protoFileWatchers.length, 2, 'root and imported files should be watched');
+      }
+      catch (error) {
+        return finish(error);
+      }
+
+      fs.writeFileSync(importedProto, 'syntax = "proto3"; message Shared { string second = 1; }');
+      setTimeout(() => {
+        try {
+          assert.ok(n1.protoTypes.lookupType('Shared').fields.second, 'import change should replace the loaded root');
+          finish();
+        }
+        catch (error) {
+          finish(error);
+        }
+      }, 250);
+    });
+  });
+
+  it('should retain the last good root and not log reload success after a failed reload', function (done) {
+    var tmpDir = fs.mkdtempSync('/tmp/node-red-protobuf-failed-reload-');
+    var protoPath = `${tmpDir}/schema.proto`;
+    var flow = [{ id: 'n1', type: 'protobuf-file', protopath: protoPath }];
+    fs.writeFileSync(protoPath, 'syntax = "proto3"; message Stable { string value = 1; }');
+
+    helper.load(protofile, flow, function () {
+      var n1 = helper.getNode('n1');
+      var originalRoot = n1.protoTypes;
+      var reloadLogs = 0;
+      var loadErrors = 0;
+      n1.on('call:log', function (call) {
+        if (/Reloaded/.test(String(call.args[0]))) reloadLogs += 1;
+      });
+      n1.on('call:error', function () {
+        loadErrors += 1;
+      });
+
+      fs.writeFileSync(protoPath, 'not valid protobuf');
+      setTimeout(() => {
+        try {
+          assert.strictEqual(n1.protoTypes, originalRoot, 'failed reload must retain the last good root');
+          assert.ok(n1.protoTypes.lookupType('Stable'));
+          assert.ok(loadErrors >= 1, 'failed reload should be reported');
+          assert.strictEqual(reloadLogs, 0, 'failed reload must not be logged as successful');
+          fs.rmSync(tmpDir, { recursive: true, force: true });
+          done();
+        }
+        catch (error) {
+          fs.rmSync(tmpDir, { recursive: true, force: true });
+          done(error);
+        }
+      }, 250);
+    });
+  });
+
   it('should resolve imported proto files when only the root file is configured', function (done) {
     var flow = [{ id: 'n1', type: 'protobuf-file', name: 'test name', protopath: 'examples/protos/sensor.proto' }];
     helper.load(protofile, flow, function () {

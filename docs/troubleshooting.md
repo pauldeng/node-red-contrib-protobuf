@@ -80,7 +80,9 @@ Check:
 
 - Watch mode applies only to file-mode schemas.
 - `watchFile` must not be disabled.
+- Imported files resolved by protobuf.js are watched alongside configured root files.
 - All watched paths must be readable.
+- A syntax or import error during reload is reported while the last successfully loaded schema remains active; fix the file to allow the next change event to reload it.
 - If your editor saves by rename, configure it for in-place writes or redeploy the flow after edits to force a reload.
 
 ## Docker Tests Fail Before Mocha Starts
