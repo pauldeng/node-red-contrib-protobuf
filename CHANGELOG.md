@@ -7,6 +7,7 @@ All notable changes to this package will be documented in this file. The format 
 ### Changed
 
 - Updated protobuf.js to 8.7.0 and refreshed the Playwright, ESLint, and Node-RED development toolchain.
+- Updated GitHub Actions and expanded CI to Node.js 26; release tags now run editor UI and packaged Node-RED integration tests instead of release-time CLI validation.
 
 ### Fixed
 
@@ -14,7 +15,7 @@ All notable changes to this package will be documented in this file. The format 
 - Invalid repeated, map, or nested base64url byte values now follow the configured warn-or-error validation behavior instead of escaping as a `TypeError`.
 - File watch mode now reloads changes to imported schemas and no longer claims a failed reload succeeded; the existing last-good schema remains active after failure.
 
-## [2.0.0] - TBD
+## [2.0.0] - 2026-06-14
 
 First release under the `@pauldeng/` npm scope. Continuation of [`node-red-contrib-protobuf`](https://www.npmjs.com/package/node-red-contrib-protobuf) `1.1.2` by [Alexander Wellbrock](https://w4tsn.github.io/blog), which has been unmaintained since 2023-01-06.
 
