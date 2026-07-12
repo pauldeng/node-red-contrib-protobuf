@@ -61,14 +61,14 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@playwright/test": "^1.60.0",
-    "eslint": "^10.4.1",
+    "@playwright/test": "^1.61.1",
+    "eslint": "^10.7.0",
     "mocha": "^11.7.6",
-    "node-red": "^5.0.0",
+    "node-red": "^5.0.1",
     "node-red-node-test-helper": "^0.3.6",
     "nyc": "^18.0.0"
   },
   "dependencies": {
-    "protobufjs": "^8.6.3"
+    "protobufjs": "^8.7.0"
   }
 }

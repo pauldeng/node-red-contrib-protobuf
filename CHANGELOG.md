@@ -4,6 +4,10 @@ All notable changes to this package will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Changed
+
+- Updated protobuf.js to 8.7.0 and refreshed the Playwright, ESLint, and Node-RED development toolchain.
+
 ### Fixed
 
 - Delimited proto2 decoding now continues with trailing frames after forwarding a partial message that is missing required fields.
