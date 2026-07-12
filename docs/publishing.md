@@ -77,10 +77,10 @@ git push origin master --follow-tags
 Pushing the `v*` tag triggers `publish.yml`:
 
 1. Checks out the tagged commit, installs deps, runs `npm run lint` and `npm test`.
-2. Runs `npx node-red-dev validate --path .` (the Flow Library scorecard).
+2. Runs the Playwright editor UI tests and packaged Node-RED Docker integration test.
 3. Runs `npm publish --provenance --access public`. Trusted Publisher provides the OIDC token; no secret is needed.
 
-After the workflow succeeds, confirm the new version appears on <https://www.npmjs.com/package/@pauldeng/node-red-contrib-protobuf> with a provenance badge, and that the listing on flows.nodered.org has refreshed.
+After the workflow succeeds, confirm the new version appears on <https://www.npmjs.com/package/@pauldeng/node-red-contrib-protobuf> with a provenance badge, and that the listing on flows.nodered.org has refreshed. Flow Library indexing is checked after publish through the package page rather than by downloading an unpinned release-time CLI.
 
 ## Verification before tagging
 
@@ -94,7 +94,6 @@ Treat the steady-state path as immutable: npm publishes cannot be replaced once 
 | Packaged install (Docker) | `npm run test:docker` |
 | Tarball contents | `npm pack --dry-run` |
 | Publish dry run | `npm publish --dry-run` |
-| Flow Library scorecard | `npx --yes node-red-dev validate --path .` |
 
 ## Recovering from a bad release
 
