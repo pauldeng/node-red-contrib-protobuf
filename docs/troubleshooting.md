@@ -13,7 +13,7 @@ Check:
 
 - `msg.protobufType` overrides the configured Type field.
 - The type name may need the package prefix, such as `package.Message`.
-- Use the protobuf-file editor's Validate & list types button to see exact names.
+- Use the protobuf-file editor's **Validate** button to see exact names.
 - Confirm the protofile node loaded without errors.
 
 ## Proto File Does Not Load
@@ -74,7 +74,7 @@ By default, delimited decode sends one Node-RED message per decoded item. Choose
 
 ## Watch Mode Does Not Reload
 
-The watcher in `src/nodes/protofile.js` reloads only on `fs.watch` events of type `change`. Editors and tools that save atomically by writing to a temp file and renaming over the original emit `rename` events instead, which the watcher ignores. In that case the on-disk file is current but the loaded schema stays stale until the next deploy.
+The watcher in `src/nodes/protofile.js` treats both `fs.watch` event types (`change` and `rename`) as reload signals. This covers in-place writes, atomic temp-and-rename saves, and rename-only backup saves. `fs.watch` delivery is platform- and filesystem-dependent, so a save can still go unnoticed if the operating system emits no event.
 
 Check:
 
@@ -83,7 +83,7 @@ Check:
 - Imported files resolved by protobuf.js are watched alongside configured root files.
 - All watched paths must be readable.
 - A syntax or import error during reload is reported while the last successfully loaded schema remains active; fix the file to allow the next change event to reload it.
-- If your editor saves by rename, configure it for in-place writes or redeploy the flow after edits to force a reload.
+- If no watch event is delivered, redeploy the flow to force a reload.
 
 ## Docker Tests Fail Before Mocha Starts
 

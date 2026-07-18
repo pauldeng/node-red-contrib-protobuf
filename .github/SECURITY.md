@@ -22,6 +22,6 @@ You can expect an acknowledgement within seven days and a status update within t
 
 ## Scope
 
-This policy covers the runtime behavior of the `encode`, `decode`, and `protobuf-file` nodes and the admin endpoint that backs the **Validate & list types** button.
+This policy covers the runtime behavior of the `encode`, `decode`, and `protobuf-file` nodes and the admin endpoint that backs the **Validate** button.
 
 Vulnerabilities in [`protobufjs`](https://github.com/protobufjs/protobuf.js) itself should be reported upstream.

@@ -1,6 +1,7 @@
 const protobufjs = require('protobufjs');
 const { Root } = protobufjs;
 const fs = require('fs');
+const path = require('path');
 
 // Split a comma-separated proto path into the array protobuf.js expects,
 // or pass a single path (or already-split array) straight through.
@@ -106,23 +107,37 @@ module.exports = function (RED) {
             (protoFileNode.protoFileWatchers || []).forEach((watcher) => watcher.close());
             protoFileNode.protoFileWatchers = [];
         };
+        const reloadFromDisk = function () {
+            if (protoFileNode.protoTypes.files.some((watchedFile) => !fs.existsSync(watchedFile))) {
+                protoFileNode.watchProtopath();
+                return;
+            }
+            if (protoFileNode.load()) {
+                protoFileNode.log('Protobuf file changed on disk. Reloaded.');
+            }
+            protoFileNode.watchProtopath();
+        };
         protoFileNode.watchProtopath = function () {
             protoFileNode.closeWatchers();
             for (const watchedFile of protoFileNode.protoTypes.files) {
+                const watchedDir = path.dirname(watchedFile);
+                const watchedName = path.basename(watchedFile);
                 try {
-                    protoFileNode.protoFileWatchers.push(fs.watch(watchedFile, (eventType) => {
-                        if (eventType === 'change') {
-                            // Editors and fs.watch can fire several change events per save,
-                            // so changes are batched into a single reload of all files.
-                            clearTimeout(reloadTimer);
-                            reloadTimer = setTimeout(() => {
-                                if (protoFileNode.load()) {
-                                    protoFileNode.watchProtopath();
-                                    protoFileNode.log('Protobuf file changed on disk. Reloaded.');
-                                }
-                            }, 50);
+                    const watcher = fs.watch(watchedDir, (_eventType, filename) => {
+                        if (filename && filename.toString() !== watchedName) {
+                            return;
                         }
-                    }));
+                        // Editors and fs.watch can fire several events per save,
+                        // so changes are batched into a single reload of all files.
+                        clearTimeout(reloadTimer);
+                        reloadTimer = setTimeout(reloadFromDisk, 50);
+                    });
+                    watcher.on('error', (error) => {
+                        protoFileNode.error(`Error watching ${watchedFile} on disk: ` + error);
+                        protoFileNode.protoFileWatchers = (protoFileNode.protoFileWatchers || []).filter((openWatcher) => openWatcher !== watcher);
+                        watcher.close();
+                    });
+                    protoFileNode.protoFileWatchers.push(watcher);
                 }
                 catch (error) {
                     protoFileNode.error(`Error when trying to watch ${watchedFile} on disk: ` + error);

@@ -38,7 +38,7 @@ npm install @pauldeng/node-red-contrib-protobuf
 3. Set the **Type** field (for example `package.Message`) - or supply `msg.protobufType` on each message, which overrides the configured Type.
 4. Send `msg.payload` as a JavaScript object (encode) or a `Buffer` (decode).
 
-Use the **Validate & list types** button in the protobuf-file dialog to confirm the schema loaded and to copy the exact type name into the Type field.
+Use the **Validate** button in the protobuf-file dialog to confirm the schema loaded and to copy the exact type name into the Type field.
 
 ## Examples
 

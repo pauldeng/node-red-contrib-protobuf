@@ -102,6 +102,49 @@ describe('protobuf protofile node', function () {
     });
   });
 
+  it('should reload after a rename-only save with a delayed replacement', function (done) {
+    var tmpDir = fs.mkdtempSync('/tmp/node-red-protobuf-rename-watch-');
+    var protoPath = `${tmpDir}/schema.proto`;
+    var backupPath = `${tmpDir}/schema.proto~`;
+    var flow = [{ id: 'n1', type: 'protobuf-file', protopath: protoPath }];
+    var timeout;
+    var finished = false;
+
+    fs.writeFileSync(protoPath, 'syntax = "proto3"; message Before {}');
+
+    const finish = function (error) {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timeout);
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+      done(error);
+    };
+
+    helper.load(protofile, flow, function () {
+      var n1 = helper.getNode('n1');
+
+      n1.on('call:log', function (call) {
+        if (!/Reloaded/.test(String(call.args[0]))) return;
+        try {
+          assert.ok(n1.protoTypes.lookupType('After'), 'rename-only saves should trigger a reload');
+          finish();
+        }
+        catch (error) {
+          finish(error);
+        }
+      });
+
+      timeout = setTimeout(() => {
+        finish(new Error('Timed out waiting for rename-only save reload'));
+      }, 1000);
+
+      fs.renameSync(protoPath, backupPath);
+      setTimeout(() => {
+        fs.writeFileSync(protoPath, 'syntax = "proto3"; message After {}');
+      }, 100);
+    });
+  });
+
   it('should reload when any configured file changes', function (done) {
     var tmpDir = fs.mkdtempSync('/tmp/node-red-protobuf-watch-');
     var firstProto = `${tmpDir}/first.proto`;
@@ -224,6 +267,32 @@ describe('protobuf protofile node', function () {
           done(error);
         }
       }, 250);
+    });
+  });
+
+  it('should report and drop watcher errors', function (done) {
+    var tmpDir = fs.mkdtempSync('/tmp/node-red-protobuf-watch-error-');
+    var protoPath = `${tmpDir}/schema.proto`;
+    var flow = [{ id: 'n1', type: 'protobuf-file', protopath: protoPath }];
+    fs.writeFileSync(protoPath, 'syntax = "proto3"; message Stable {}');
+
+    helper.load(protofile, flow, function () {
+      var n1 = helper.getNode('n1');
+      var watcher = n1.protoFileWatchers[0];
+
+      n1.on('call:error', function () {
+        try {
+          assert.strictEqual(n1.protoFileWatchers.includes(watcher), false);
+          fs.rmSync(tmpDir, { recursive: true, force: true });
+          done();
+        }
+        catch (error) {
+          fs.rmSync(tmpDir, { recursive: true, force: true });
+          done(error);
+        }
+      });
+
+      watcher.emit('error', new Error('watch failed'));
     });
   });
 

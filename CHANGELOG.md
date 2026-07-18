@@ -4,6 +4,11 @@ All notable changes to this package will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Fixed
+
+- Decode dialogs now backfill the delimited output mode for legacy flows, and file watching reloads after rename-only saves.
+- Editor UI tests no longer use an ambiguous locator that can also match the rendered help panel.
+
 ## [2.0.1] - 2026-07-12
 
 ### Changed
@@ -35,7 +40,7 @@ First release under the `@pauldeng/` npm scope. Continuation of [`node-red-contr
 - proto2, Editions 2023, and Editions 2024 round-trip coverage with bundled fixtures.
 - Delimited (length-prefixed) encoding and decoding (`encodeDelimited` / `decodeDelimited`).
 - Inline `.proto` definitions in the protobuf-file config dialog, with optional save-to-library.
-- Validate-and-list-types admin endpoint backing the editor's **Validate & list types** button.
+- Validate-and-list-types admin endpoint backing the editor's **Validate** button.
 - Decode output options: enum/long/bytes representation, include unset defaults, JSON-safe NaN/Infinity.
 - Encode input options: base64 / base64url byte input; strict verification vs `fromObject` conversion.
 - Eight bundled example flows: encode/decode basics, proto2 / proto3 / editions 2023 / editions 2024 round trips, delimited streams, and chained (multi-file) protos.

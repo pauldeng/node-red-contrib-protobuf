@@ -413,7 +413,7 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
         await expect(page.locator('#node-input-protoType')).toHaveAttribute('placeholder', 'Example: package.Message');
         await expect(page.locator('#node-input-protobuf-type-tip')).toContainText('When msg.protobufType is set, the value overrides this field');
         await expect(page.locator('#node-input-delimited')).toBeVisible();
-        await expect(page.locator('text=Input options')).toBeVisible();
+        await expect(page.locator('#dialog-form').getByText('Input options', { exact: true })).toBeVisible();
         await expect(page.locator('#node-input-inputConversion')).toBeVisible();
         await expect(page.locator('#node-input-inputConversion')).toHaveValue('strict');
         await expect(page.locator('#node-input-inputConversion')).toContainText('Convert plain object');
@@ -455,6 +455,7 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
         await expect(page.locator('#node-input-delimitedOutput-row')).toBeHidden();
         await page.locator('#node-input-delimited').check();
         await expect(page.locator('#node-input-delimitedOutput-row')).toBeVisible();
+        await expect(page.locator('#node-input-delimitedOutput')).toHaveValue('messages');
         await page.locator('#node-input-delimited').uncheck();
         await expect(page.locator('#node-input-delimitedOutput-row')).toBeHidden();
         // Output conversion options.
@@ -523,7 +524,7 @@ test('Node-RED editor dialogs expose modern protobuf configuration UI', async ({
         await expect(page.locator('label[for="node-config-input-protopath"]')).toContainText('Proto path');
         await expect(page.locator('label[for="node-config-input-watchFile"]')).toContainText('Watch file');
         await expect(page.locator('label[for="node-config-input-keepCase"]')).toContainText('Keep case');
-        await expect(page.locator('text=Keep names like')).toBeVisible();
+        await expect(page.locator('label[for="node-config-input-keepCase"]').locator('..')).toContainText('Keep names like');
         await expect(page.locator('#node-config-protopath-tip')).toContainText('Use commas to load multiple .proto files');
         await expect(page.locator('#node-config-watch-tip')).toContainText('All listed files are watched');
 
