@@ -4,9 +4,12 @@ All notable changes to this package will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [2.0.2] - 2026-07-18
+
 ### Fixed
 
-- Decode dialogs now backfill the delimited output mode for legacy flows, and file watching reloads after rename-only saves.
+- File watching now watches the proto file directories, so rename-only saves and delete-then-recreate workflows reload once the schema path returns; asynchronous watcher errors are reported and the failed watcher dropped instead of crashing the runtime.
+- Decode dialogs now backfill the delimited output mode for legacy flows that predate the option.
 - Editor UI tests no longer use an ambiguous locator that can also match the rendered help panel.
 
 ## [2.0.1] - 2026-07-12
@@ -69,5 +72,7 @@ First release under the `@pauldeng/` npm scope. Continuation of [`node-red-contr
 
 For the `1.1.x` and earlier history, see the original [`node-red-contrib-protobuf`](https://www.npmjs.com/package/node-red-contrib-protobuf) on npm and its upstream repository.
 
-[Unreleased]: https://github.com/pauldeng/node-red-contrib-protobuf/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/pauldeng/node-red-contrib-protobuf/compare/v2.0.2...HEAD
+[2.0.2]: https://github.com/pauldeng/node-red-contrib-protobuf/releases/tag/v2.0.2
+[2.0.1]: https://github.com/pauldeng/node-red-contrib-protobuf/releases/tag/v2.0.1
 [2.0.0]: https://github.com/pauldeng/node-red-contrib-protobuf/releases/tag/v2.0.0

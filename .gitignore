@@ -4,6 +4,7 @@ coverage/
 test-results/
 playwright-report/
 blob-report/
+*.tgz
 
 # Local planning / working documents (not shipped, not committed)
 GOAL.md
