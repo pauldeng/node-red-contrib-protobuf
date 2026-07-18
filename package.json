@@ -1,6 +1,6 @@
 {
   "name": "@pauldeng/node-red-contrib-protobuf",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Node-RED nodes for encoding and decoding Protocol Buffers.",
   "type": "commonjs",
   "main": "src/index.js",
